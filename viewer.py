@@ -39,7 +39,7 @@ for f in filenames:
 plt.ylabel("Temp ('F)")
 plt.xlabel("Time (sec)")
 plt.legend(tuple(legend_names), prop={'size':11}, loc='lower right')
-all_plots[1].set_color('red')
+#all_plots[1].set_color('red')
 
 
 

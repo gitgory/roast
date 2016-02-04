@@ -26,7 +26,7 @@ if not USE_FAKE_DATA:
 VERSION = "16.02.02"	# just YY.MM.DD format to avoid conflicts with file on laptop vs bbb
 
 FILE_TYPE = "csv" # 3-letter extension (string) of the file to export
-SAVE_PATH = "./RoastData/" # location of file saves... could be determined programatically
+SAVE_PATH = "../RoastData/" # location of file saves... could be determined programatically
 MAX_ATTEMPTS = 3  # number of tries to get a non-NaN temperature reading
 VERBOSE = True    # print out any additional comments such as the NaN commentary
 BEAN_TEMP = 68    # initial bean temperature (*F)... this only matters to initialize the running average

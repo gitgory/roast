@@ -8,7 +8,6 @@ import json
 # see: https://stackoverflow.com/questions/2801882/generating-a-png-with-matplotlib-when-display-is-undefined
 # matplotlib.use('Agg')
 
-# a change
 
 import matplotlib.pyplot as plt
 from Tkinter import *

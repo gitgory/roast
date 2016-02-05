@@ -8,6 +8,8 @@ import json
 # see: https://stackoverflow.com/questions/2801882/generating-a-png-with-matplotlib-when-display-is-undefined
 # matplotlib.use('Agg')
 
+# a change
+
 import matplotlib.pyplot as plt
 from Tkinter import *
 import tkFileDialog
@@ -43,7 +45,7 @@ def read_in_data(filenames):
 		# collect all these individual samples in one big roast list
 		all_together.append(temp_dict)
 
-	print "# of roasts  imported = ", len(all_together)
+	print "\n# of roasts imported = %i\n"% len(all_together)
 
 	return all_together
 
@@ -61,6 +63,7 @@ def var_states():
 def get_desired_data(all_possible_data):
 	# this function does not work right now. it does not return 1 (True) values for checked boxes
 	# i really don't understand what's the issue.
+	# IDEALLY, it takes a list of strings which are the names of available series in the roast files that can be graphed
 	master = Tk()
 	global variable_locker
 
@@ -101,9 +104,70 @@ def get_desired_data(all_possible_data):
 
 	# and we're out of the Tk window now
 
+def get_desired_data_TEMP(all_possible_data): 
+	# it takes a list of strings which are the names of available series in the roast files that can be graphed
+	# user selects which series they desire and it returns a list of those series names (strings)
+	# this is an intermediate step to determine the data series's the user wants to plot.  It is text-entry based until we can get the UI checkboxes working.
+
+	for i in range(len(all_possible_data)):
+		print "%i)   %s" % (i, all_possible_data[i])
+
+
+	desired_series = []
+
+
+	while True:
+		# get the user's preferences
+		
+		user_selection = raw_input("Select desired data series (leave blank to continue):  ")
+		if user_selection == "": break
+		try:
+			user_selection = int(user_selection)
+			desired_series.append(all_possible_data[user_selection])
+		except (SyntaxError, ValueError):
+			# didn't enter an integer
+			print "Invalid entry -- <leave blank to continue> "
+			continue
+		except IndexError:
+			# its outside of the bounds of the options
+			print "Value out of range"
+			continue
+
+	# strip out any duplicates
+	desired_series = list(set(desired_series))
+
+	return desired_series
+
+def graph_roasts(all_roasts, desired_data):
+		
+	all_plots = []				# this supposed to be the equivalent of a handle for a plot, but for each plot
+	legend_names = []			# collects all the nicknames for display to the legend
+	# import that data
+
+	for roast in all_roasts:
+		for series in desired_data:
+			x = []
+			y = []
+			for i in roast[series]:
+				x.append(i[0])
+				y.append(i[1])
+			all_plots.append(plt.plot(x, y))
+			legend_names.append(roast['nickname']+" "+series)
+
+	plt.ylabel("Temp ('F)")
+	plt.xlabel("Time (sec)")
+	plt.legend(tuple(legend_names), prop={'size':11}, loc='lower right')
+
+	# I'd like to be able to manually change the colors... but this isn't the way
+	#all_plots[1].set_color('red')
 
 
 
+	# output them to a screen
+	plt.show()
+
+def export_to_csv(all_roasts, desired_data):
+	print "yeah, there's nothing here yet..."
 
 
 
@@ -115,47 +179,28 @@ filez = user_select_files("Choose a file")
 # read in all the data from those files
 all_roasts = read_in_data(filez)
 
-available_data = ['temp_actual', 'temp_smooth']			# more could go here but i need error handling for the files that don't have keys with these names
+available_data = ['temp_actual', 'temp_smooth']			# more could go here but i need error handling for the files that don't have keys with these legend_names
 
-variable_locker = []
-#desired_data = get_desired_data(available_data)
 
-# get_desired_data is not working right now so I'm bypassing it here... When it works it should allow creation of the desired_data list via checkboxes in Tkinter
-desired_data = ['temp_actual']
+# currently not working, bypassed below
+# When it works it should allow creation of the desired_data list via checkboxes in Tkinter
+
+# variable_locker = []				
+# desired_data = get_desired_data(available_data)		
+# for i in range(len(variable_locker)):
+# 	print variable_locker[i], " = ", variable_locker[i].get()
+
+
+
+# get_desired_data is not working right now so this is the temporary solution to getting the data series the user wants
+desired_data = get_desired_data_TEMP(available_data)
 
 print "desired_data = ", desired_data
 
-for i in range(len(variable_locker)):
-	print variable_locker[i], " = ", variable_locker[i].get()
+user_choice = raw_input('Export to CSV?  [N/y]')
+if user_choice in ['Y','y']:
+	export_to_csv(all_roasts, desired_data)
 
-	
-
-
-
+graph_roasts(all_roasts, desired_data)
 
 
-all_plots = []				# this supposed to be the equivalent of a handle for a plot, but for each plot
-legend_names = []			# collects all the nicknames for display to the legend
-# import that data
-
-for roast in all_roasts:
-	for series in desired_data:
-		x = []
-		y = []
-		for i in roast[series]:
-			x.append(i[0])
-			y.append(i[1])
-		all_plots.append(plt.plot(x, y))
-		legend_names.append(roast['nickname']+" "+series)
-
-plt.ylabel("Temp ('F)")
-plt.xlabel("Time (sec)")
-plt.legend(tuple(legend_names), prop={'size':11}, loc='lower right')
-
-# I'd like to be able to manually change the colors... but this isn't the way
-#all_plots[1].set_color('red')
-
-
-
-# output them to a screen
-plt.show()

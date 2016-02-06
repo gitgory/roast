@@ -26,6 +26,7 @@ def user_select_files(message):
 	# define the top-level window for this Tkinter app
 	root = Tk()		
 	get_filenames = tkFileDialog.askopenfilenames(parent=root,title=message)		# I think this is why I currently get the lone window left open...
+	root.destroy()
 	return get_filenames
 
 def read_in_data(filenames):
@@ -174,45 +175,51 @@ def export_to_csv(all_roasts, desired_data):
 
 
 
+while True:
+	try:
+		# get a list of all the files we're reading from (full path)
+		print "Choose file(s) to view."
+		filez = user_select_files("Choose a file")
 
-# get a list of all the files we're reading from (full path)
-print "Choose file(s) to view."
-filez = user_select_files("Choose a file")
-
-# read in all the data from those files
-all_roasts = read_in_data(filez)
-
-available_data = ['temp_actual', 'temp_smooth']			# more could go here but i need error handling for the files that don't have keys with these legend_names
-
-
-# currently not working, bypassed below
-# When it works it should allow creation of the desired_data list via checkboxes in Tkinter
-
-# variable_locker = []				
-# desired_data = get_desired_data(available_data)		
-# for i in range(len(variable_locker)):
-# 	print variable_locker[i], " = ", variable_locker[i].get()
+		# read in all the data from those files
+		all_roasts = read_in_data(filez)
+		break
+		
+	except ValueError:
+		print "not a valid file type. file must contain a json data type"
 
 
 
-# get_desired_data is not working right now so this is the temporary solution to getting the data series the user wants
-desired_data = get_desired_data_TEMP(available_data)
+if len(all_roasts)>0:
+	available_data = ['temp_actual', 'temp_smooth']			# more could go here but i need error handling for the files that don't have keys with these legend_names
 
-print "desired_data = ", desired_data
 
-user_choice = raw_input('Export to CSV?  [y/N]  ')
-if user_choice in ['Y','y']:
-	#export_to_csv(all_roasts, desired_data)
-	# ideally, you'd be passing in filenames 
-	# title will have to be separately generated from the roast information... name, date, t_ambient, etc.... once thats collected in the json export 
-	for roast in all_roasts:
-		dict2csv(roast, title="", only_export=desired_data, subscript1="_sec", subscript2="_value")
-		print "completed export"
+	# currently not working, bypassed below
+	# When it works it should allow creation of the desired_data list via checkboxes in Tkinter
 
-user_choice = raw_input('Show graph?  [Y/n]  ')
-if user_choice in ['Y','y','']:
-	graph_roasts(all_roasts, desired_data)
+	# variable_locker = []				
+	# desired_data = get_desired_data(available_data)		
+	# for i in range(len(variable_locker)):
+	# 	print variable_locker[i], " = ", variable_locker[i].get()
 
 
 
+	# get_desired_data is not working right now so this is the temporary solution to getting the data series the user wants
+	desired_data = get_desired_data_TEMP(available_data)
 
+	print "desired_data = ", desired_data
+
+	user_choice = raw_input('Export to CSV?  [y/N]  ')
+	if user_choice in ['Y','y']:
+		#export_to_csv(all_roasts, desired_data)
+		# ideally, you'd be passing in filenames 
+		# title will have to be separately generated from the roast information... name, date, t_ambient, etc.... once thats collected in the json export 
+		for roast in all_roasts:
+			dict2csv(roast, title="", only_export=desired_data, subscript1="_sec", subscript2="_value")
+			print "completed export"
+
+	user_choice = raw_input('Show graph?  [Y/n]  ')
+	if user_choice in ['Y','y','']:
+		graph_roasts(all_roasts, desired_data)
+else:
+	print "why would you come here if you didn't want to see any roasts?\n"

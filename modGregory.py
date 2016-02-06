@@ -6,6 +6,7 @@ from Tkinter import *
 from tkFileDialog import askdirectory
 
 def generate_dict_with_2d(k=4,l=10):
+	# This function is only used for generating a dictionary for the purpose of testing.
 	# Generates and returns a dictionary with k keys.
 	# The value for each key is a two dimensional lists.
 	# Each list is l long.
@@ -36,20 +37,17 @@ def get_str_from_user(message="Enter the filename with suffix:  ", valid_suffix=
 			print("Try again. Remember to include the suffix.")
 			continue
 
-def dict2csv(d, title="some header", only_export=[''], subscript1="_x", subscript2="_y"):
+def dict2csv(my_dict, title="some header", only_export=[''], subscript1="_x", subscript2="_y"):
 
 	# writes a dictionary of 2D lists to csv
 	# assumes you have a filename already, likely based on the import filename
 	# returns nothing
 
-	# generate some filename for now
+	# grab the save location from the user
 	pth = tk_ui_for_path()
-	filename = get_str_from_user(valid_suffix=['csv'])
 
-	full_filename = pth+'/'+filename
-
-	# generate some dictionary for now
-	my_dict = d
+	# build the full file path and add an extension
+	full_filename = pth+'/'+d['filename']+'.csv'
 
 	# write header information to file
 	with open(full_filename, 'w') as f:
@@ -76,4 +74,5 @@ def dict2csv(d, title="some header", only_export=[''], subscript1="_x", subscrip
 			f.write(s+"\n")
 			i += 1
 			if it_worked == False:
+				print "export complete."
 				break

@@ -14,7 +14,7 @@ from Tkinter import *
 import tkFileDialog
 from modGregory import *
 
-VERSION = "16.02.05"		# just yy.mm.dd format of last update
+VERSION = "16.02.06"		# just yy.mm.dd format of last update
 
 
 def user_select_files(message):
@@ -167,59 +167,64 @@ def graph_roasts(all_roasts, desired_data):
 	# output them to a screen
 	plt.show()
 
-def export_to_csv(all_roasts, desired_data):
-	print "yeah, there's nothing here yet..."
-	pass
+def generate_title(d):
+	# takes the bean dictionary and creates a title/header for the csv file (returns a string)
+	title = "%s\nRun #%02.i,T_ambient = %.f\noriginal save location:%s\n\n"%(d['beanName'], d['run'], d['t_ambient'], d['filename'])
+	return title
 
 
 
+def main():
+	while True:
+		try:
+			# get a list of all the files we're reading from (full path)
+			print "Choose file(s) to view."
+			filez = user_select_files("Choose a file")
+
+			# read in all the data from those files
+			all_roasts = read_in_data(filez)
+			break
+			
+		except ValueError:
+			print "not a valid file type. file must contain a json data type"
 
 
-while True:
-	try:
-		# get a list of all the files we're reading from (full path)
-		print "Choose file(s) to view."
-		filez = user_select_files("Choose a file")
-
-		# read in all the data from those files
-		all_roasts = read_in_data(filez)
-		break
-		
-	except ValueError:
-		print "not a valid file type. file must contain a json data type"
+	# as long as you actually picked some files, proceed.
+	if len(all_roasts)>0:
+		available_data = ['temp_actual', 'temp_smooth']			# more could go here but i need error handling for the files that don't have keys with these legend_names
 
 
+		# variable_locker = []				
+		# desired_data = get_desired_data(available_data)
+		# currently not working, bypassed below
+		# When it works it should allow creation of the desired_data list via checkboxes in Tkinter		
+		# for i in range(len(variable_locker)):
+		# 	print variable_locker[i], " = ", variable_locker[i].get()
 
-if len(all_roasts)>0:
-	available_data = ['temp_actual', 'temp_smooth']			# more could go here but i need error handling for the files that don't have keys with these legend_names
-
-
-	# currently not working, bypassed below
-	# When it works it should allow creation of the desired_data list via checkboxes in Tkinter
-
-	# variable_locker = []				
-	# desired_data = get_desired_data(available_data)		
-	# for i in range(len(variable_locker)):
-	# 	print variable_locker[i], " = ", variable_locker[i].get()
+		# this is the temporary solution to getting the data series the user wants... use until get_desired_data() above is fixed
+		desired_data = get_desired_data_TEMP(available_data)
 
 
+		if raw_input('Export to CSV?  [y/N]  ') in ['Y','y']:
+			# ideally, you'd be passing in save location and filenames could be inferred from the roast dictionary
+			# and then just notify the user of hte location (like how roast.py chooses the filename with a default save path) 
+			for roast in all_roasts:
+				t = generate_title(roast)
+				try:
+					dict2csv(roast, title=t, only_export=desired_data, subscript1="_sec", subscript2="_val")
+				except IOError:
+					# likely the user canceled the save location window
+					print "Invalid location. Canceling"
 
-	# get_desired_data is not working right now so this is the temporary solution to getting the data series the user wants
-	desired_data = get_desired_data_TEMP(available_data)
 
-	print "desired_data = ", desired_data
 
-	user_choice = raw_input('Export to CSV?  [y/N]  ')
-	if user_choice in ['Y','y']:
-		#export_to_csv(all_roasts, desired_data)
-		# ideally, you'd be passing in filenames 
-		# title will have to be separately generated from the roast information... name, date, t_ambient, etc.... once thats collected in the json export 
-		for roast in all_roasts:
-			dict2csv(roast, title="", only_export=desired_data, subscript1="_sec", subscript2="_value")
-			print "completed export"
+		if raw_input('Show graph?  [Y/n]  ') in ['Y','y','']:
+			graph_roasts(all_roasts, desired_data)
+	
 
-	user_choice = raw_input('Show graph?  [Y/n]  ')
-	if user_choice in ['Y','y','']:
-		graph_roasts(all_roasts, desired_data)
-else:
-	print "why would you come here if you didn't want to see any roasts?\n"
+	# but if you didn't actually pick any files to view...
+	else:
+		print "why would you come here if you didn't want to see any roasts?\n"
+
+
+main()

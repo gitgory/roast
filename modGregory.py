@@ -22,7 +22,7 @@ def tk_ui_for_path():
 	# Uses a Tkinter UI to select a path. 
 	# Returns a path name as a string.
 	root = Tk()
-	pth = askdirectory(parent=root, title="Select the location")		#tkFileDialog is a part of Tkinter
+	pth = askdirectory(parent=root, title="Select save the location", initialdir = './', mustexist = True)		#tkFileDialog is a part of Tkinter
 	root.destroy()
 	return pth
 
@@ -47,7 +47,7 @@ def dict2csv(my_dict, title="some header", only_export=[''], subscript1="_x", su
 	pth = tk_ui_for_path()
 
 	# build the full file path and add an extension
-	full_filename = pth+'/'+d['filename']+'.csv'
+	full_filename = pth+'/'+my_dict['filename']+'.csv'
 
 	# write header information to file
 	with open(full_filename, 'w') as f:
@@ -74,5 +74,5 @@ def dict2csv(my_dict, title="some header", only_export=[''], subscript1="_x", su
 			f.write(s+"\n")
 			i += 1
 			if it_worked == False:
-				print "export complete."
+				print "export complete.\n"
 				break

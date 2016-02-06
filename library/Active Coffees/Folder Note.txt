@@ -1,0 +1,3 @@
+This folder contains all the data on roasts that are in stock and available for roasting.
+
+Most of the roast files here are not json files and are not viewable by viewer.py  

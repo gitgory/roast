@@ -1,0 +1,2 @@
+This folder is a landing pad the roast export file you are currently roasting.  Just select this location when you save a new file.
+You don't have to use it, you can just save straight to the library > Active Coffees > *coffee name* folder that is appropriate.

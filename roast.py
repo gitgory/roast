@@ -3,6 +3,7 @@
 import time
 import math
 import json
+from modGregory import tk_ui_for_path
 
 # for testing the script when you don't have the beaglebone
 USE_FAKE_DATA = True 		
@@ -26,7 +27,7 @@ if not USE_FAKE_DATA:
 VERSION = "16.02.06"	# just YY.MM.DD format to avoid conflicts with file on laptop vs bbb
 
 FILE_EXT = ".txt" # 3-letter extension (string) of the file to export
-FILE_PATH = "../RoastData/" # location of file saves... could be determined programatically
+FILE_PATH = tk_ui_for_path()+"/"		# previously, this was just hardcoded
 MAX_ATTEMPTS = 3  # number of tries to get a non-NaN temperature reading
 VERBOSE = True    # print out any additional comments such as the NaN commentary
 BEAN_TEMP = 68    # initial bean temperature (*F)... this only matters to initialize the running average

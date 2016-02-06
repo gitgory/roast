@@ -169,7 +169,7 @@ def graph_roasts(all_roasts, desired_data):
 
 def generate_title(d):
 	# takes the bean dictionary and creates a title/header for the csv file (returns a string)
-	title = "%s\nRun #%02.i,T_ambient = %.f\noriginal save location:%s\n\n"%(d['beanName'], d['run'], d['t_ambient'], d['filename'])
+	title = "%s\nRun #%02.i,T_ambient = %.f\n\n"%(d['beanName'], d['run'], d['t_ambient'])
 	return title
 
 

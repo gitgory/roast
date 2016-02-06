@@ -23,10 +23,10 @@ if not USE_FAKE_DATA:
 	sensor = MAX31855.MAX31855(CLK, CS, DO)
 	fake_message = ""		# overwrite previous message so printout shows nothing when printing actual sampled data
 
-VERSION = "16.02.02"	# just YY.MM.DD format to avoid conflicts with file on laptop vs bbb
+VERSION = "16.02.06"	# just YY.MM.DD format to avoid conflicts with file on laptop vs bbb
 
-FILE_TYPE = "csv" # 3-letter extension (string) of the file to export
-SAVE_PATH = "../RoastData/" # location of file saves... could be determined programatically
+FILE_EXT = ".txt" # 3-letter extension (string) of the file to export
+FILE_PATH = "../RoastData/" # location of file saves... could be determined programatically
 MAX_ATTEMPTS = 3  # number of tries to get a non-NaN temperature reading
 VERBOSE = True    # print out any additional comments such as the NaN commentary
 BEAN_TEMP = 68    # initial bean temperature (*F)... this only matters to initialize the running average
@@ -59,6 +59,8 @@ sample = {}
 #sample['temp_target'] = []	# the target will either be calculated from the profile on the fly or pre-loaded (depending on how you end up dealing with time)
 sample['temp_actual'] = []	# the actual, sampled temperate ('F)
 sample['temp_smooth'] = []	# the smoothed reading (hopefully less noisy than the actual reading)
+sample['filepath'] = FILE_PATH
+sample['fileext'] = FILE_EXT
 #sample['Q_in'] = []		# approximation of heat rate based on duty cycle (setpoint) of the heating element... currently 100% of 0%
 #sample['E_heat'] = []		# a fake parameter approximating energy input into the beans, Q_in*dt, right?
 #sample['specific_heat']=[]  # totally aspirational, would require knowledge of Qheat or experimentally sampling the bean at various stages (assuming it changes over time)
@@ -76,7 +78,6 @@ def get_bean_info():
 	# Generating the bean dicionary keys here isn't ideal...
 	# they should be identified elsewhere, perferably with the other VARIABLE definitions at the beginning
 	info = [['beanName','Ethiopia Sidamo']]
-	info += [['run','6']]
 
 	# builds the bean dictionary by requesting values for each of the desired informations
 	# this really should be in a while loop with exceptions so as to ensure appropriate values
@@ -86,12 +87,29 @@ def get_bean_info():
 	# allows a quick bypass of entering information while testing
 	if bean['beanName']=="": bean['beanName']='TEST'
 	if USE_FAKE_DATA: bean['beanName'] += '_FAKE_DATA'		    
-	if bean['run']=="": bean['run']=99						
-
-	# ensures the run is actually a digit... why is this necessary?!? I think it had something to do with the old write to CSV -> excel or something
-	bean['run'] = int(bean['run'])
 
 	return bean
+
+def get_sample_info():
+	# This is information specific to the roast
+	# It returns a dictionary that will be used to record this roast
+
+	sample = {}
+
+	# Desired information
+	# Generating the sample dicionary keys here isn't ideal...
+	# they should be identified elsewhere, perferably with the other VARIABLE definitions at the beginning
+	sample['run']=raw_input("Enter the Run # (example: 5)... ")
+
+	# allows a quick bypass of entering information while testing		    
+	if sample['run']=="": sample['run']=99						
+
+	# converts the run entry from a string to a digit. It's just more predictable that way.  Later processes anticipate this to be a digit.
+	sample['run'] = int(sample['run'])
+
+	sample['t_ambient'] = get_ambient_f()
+
+	return sample
 
 def c_to_f(c):
 	# takes a celsius (float) and returns a fahrenheit (float)
@@ -190,10 +208,11 @@ def new_smoothing(sample_pairs):
 	# returns a single value
 	return truncate(average_value,1)
 
-def get_filename(pth, run, nme):
-	filename = "%sRun_%02.i_%s.%s" % (pth, run, nme, FILE_TYPE)
-	# is this poor coding to grab the FILE_TYPE variable without passing it in via the function parameters?
-	print '\nfilename: "%s"' % filename
+def generate_filename(run, nme):
+	# returns the string of a file name, no path, no extension
+	filename = "Run_%02.i_%s" % (run, nme)
+	# WARNING: this is a little deceptive because we are printing out the file with ext but only returning the filename (no ext)
+	print '\nsaving file as: "%s.%s"' % (filename, FILE_EXT)
 
 	return filename
 
@@ -268,35 +287,29 @@ def truncate(f, n):
 	return float('.'.join([i, (d+'0'*n)[:n]]))
 
 
+
+
 # display any relevant information at the start of the program
 welcome_message()
 
 # load up the fake data if we need it
-if USE_FAKE_DATA:
-	fake_data = load_fake_data()
+if USE_FAKE_DATA: fake_data = load_fake_data()
 
 
-# initiate bean information... This can later be replaced with a bean library
-bean = get_bean_info()
+# pull all the information about this particular bean into the roast file
+sample.update(get_bean_info())
+# sample as already been initiated at the top
+sample.update(get_sample_info())
+
 
 # generate a file name, based on the bean information
-# Intentionally not passing it the full bean dictionary so get_filename() doesn't have to have any knowledge of the dictionary
-filename = get_filename(SAVE_PATH, bean['run'],bean['beanName'])	# can be re-purposed for the json output
+# Intentionally not passing it the full bean dictionary so generate_filename() doesn't have to have any knowledge of the dictionary
+filename = generate_filename(sample['run'],sample['beanName'])	# can be re-purposed for the json output
 
-# create file and write bean information and title and column headers to file
-f = open(filename,'w')		# soon to be obsolete
+# store the filename in the bean dictionary... seems risky to let the key and variable name be the same...
+sample['filename'] = filename
 
-# generate a title for the output file, containing bean information
-# this will be obsolete when we have a standalone profile/roast viewer
-title = get_title(SAVE_PATH, bean['run'], bean['beanName'])
-f.write(title)		# soon to be obsolete
-
-# generate column headers for the output file
-# as with the bean dictionary keys, data columns to be output should probably be identified early on,
-# like with the other VARIABLES at the beginning of the program and not originally mentioned in an output string, here
-# this will be obsolete when we have a standalone profile/roast viewer
-f.write("elapsed, t_avg(%i), t_bean\n"%(SMOOTH_OVER))		# soon to be obsolete
-
+full_filename = sample['filepath']+sample['filename']+sample['fileext']
 
 # final messages
 start_sequence()
@@ -306,6 +319,9 @@ for i in range(SMOOTH_OVER): sample['temp_actual'].append([0.0, BEAN_TEMP])		# a
 
 # grab the current time for later elapsed time calculations
 t_initial = time.time()
+
+
+
 
 
 
@@ -392,11 +408,8 @@ try:
 			# writes the data to a file
 			# this really should use the WITH statement
 			# from: https://stackoverflow.com/questions/11026959/python-writing-dict-to-txt-file-and-reading-dict-from-txt-file
-			json.dump(sample, open(filename[:-3]+"txt", 'w'))
+			json.dump(sample, open(full_filename, 'w'))
 
-			# still writing to the csv
-			f.write("%s, %.1f, %.1f\n" % (convert_time(elapsed), sample['temp_smooth'][-1][1], sample['temp_actual'][-1][1]))
-		
 			# and then schedule the next event
 			write_next += WRITE_FREQ
 
@@ -406,5 +419,5 @@ except KeyboardInterrupt:
 	# this is the soft exit
 
 	# do a final write to the output file so as not to lose the last bit of data that may have accumulated since the last write
-	json.dump(sample, open(filename[:-3]+"txt", 'w'))
+	json.dump(sample, open(full_filename, 'w'))
 	print "\ncomplete.\n"

@@ -12,8 +12,9 @@ import json
 import matplotlib.pyplot as plt
 from Tkinter import *
 import tkFileDialog
+from modGregory import *
 
-VERSION = "16.02.04"		# just yy.mm.dd format of last update
+VERSION = "16.02.05"		# just yy.mm.dd format of last update
 
 
 def user_select_files(message):
@@ -167,12 +168,15 @@ def graph_roasts(all_roasts, desired_data):
 
 def export_to_csv(all_roasts, desired_data):
 	print "yeah, there's nothing here yet..."
+	pass
+
 
 
 
 
 
 # get a list of all the files we're reading from (full path)
+print "Choose file(s) to view."
 filez = user_select_files("Choose a file")
 
 # read in all the data from those files
@@ -196,10 +200,19 @@ desired_data = get_desired_data_TEMP(available_data)
 
 print "desired_data = ", desired_data
 
-user_choice = raw_input('Export to CSV?  [N/y]')
+user_choice = raw_input('Export to CSV?  [y/N]  ')
 if user_choice in ['Y','y']:
-	export_to_csv(all_roasts, desired_data)
+	#export_to_csv(all_roasts, desired_data)
+	# ideally, you'd be passing in filenames 
+	# title will have to be separately generated from the roast information... name, date, t_ambient, etc.... once thats collected in the json export 
+	for roast in all_roasts:
+		dict2csv(roast, title="", only_export=desired_data, subscript1="_sec", subscript2="_value")
+		print "completed export"
 
-graph_roasts(all_roasts, desired_data)
+user_choice = raw_input('Show graph?  [Y/n]  ')
+if user_choice in ['Y','y','']:
+	graph_roasts(all_roasts, desired_data)
+
+
 
 

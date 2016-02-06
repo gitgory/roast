@@ -36,22 +36,25 @@ def get_str_from_user(message="Enter the filename with suffix:  ", valid_suffix=
 			print("Try again. Remember to include the suffix.")
 			continue
 
-def dict2csv(d, title="some header", subscript1="_x", subscript2="_y"):
+def dict2csv(d, title="some header", only_export=[''], subscript1="_x", subscript2="_y"):
 
 	# writes a dictionary of 2D lists to csv
 	# assumes you have a filename already, likely based on the import filename
 	# returns nothing
 
 	# generate some filename for now
-	filename = "something.csv"
+	pth = tk_ui_for_path()
+	filename = get_str_from_user(valid_suffix=['csv'])
+
+	full_filename = pth+'/'+filename
 
 	# generate some dictionary for now
 	my_dict = d
 
 	# write header information to file
-	with open(filename, 'w') as f:
+	with open(full_filename, 'w') as f:
 		f.write(title+"\n")
-		k = my_dict.keys()
+		k = only_export
 		[f.write("%s%s, %s%s, " % (key, subscript1, key, subscript2)) for key in k]
 		f.write('\n')
 

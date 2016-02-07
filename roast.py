@@ -319,21 +319,24 @@ start_sequence()
 
 
 
-
-# pre-fill the sampled temperature with enough values so we can start smoothing right away (at time 0:00)
-for i in range(SMOOTH_OVER): sample['temp_actual'].append([0.0, BEAN_TEMP])		# assumes beans start at room temperature
-
-# grab the current time for later elapsed time calculations
-t_initial = time.time()
-
 # and we're up and running...
 try:
+
+	# pre-fill the sampled temperature with enough values so we can start smoothing right away (at time 0:00)
+	for i in range(SMOOTH_OVER): sample['temp_actual'].append([0.0, BEAN_TEMP])		# assumes beans start at room temperature
+
+	# grab the current time for later elapsed time calculations
+	t_initial = time.time()
+
+
+
+
 	#the try statement allows for a soft exit via Ctrl+C
 	while True:
 		# determine how much time has elapsed (seconds)
 		elapsed = time.time() - t_initial
 
-		# we don't need all that accuracy when storing data so we'll truncate it
+		# we don't need all that accuracy when storing data so we'll work with a truncated version of it
 		elapsed_trunc = truncate(elapsed,3)
 
 

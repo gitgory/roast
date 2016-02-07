@@ -8,7 +8,7 @@ from modGregory import tk_ui_for_path
 # for testing the script when you don't have the beaglebone
 USE_FAKE_DATA = True 		
 FAKE_DATA_FILENAME = './fake_data.txt'
-fake_message = "* FAKE *"		# message to display to printout when using fake data
+FAKE_MESSAGE = "* FAKE *"		# message to display to printout when using fake data
 
 if not USE_FAKE_DATA:
 	# none of this will work if you aren't running the script on the beaglebone, so leave it out
@@ -22,24 +22,21 @@ if not USE_FAKE_DATA:
 	CS  = 'P9_15'
 	DO  = 'P9_23'
 	sensor = MAX31855.MAX31855(CLK, CS, DO)
-	fake_message = ""		# overwrite previous message so printout shows nothing when printing actual sampled data
+	FAKE_MESSAGE = ""		# overwrite previous message so printout shows nothing when printing actual sampled data
 
-VERSION = "16.02.06"	# just YY.MM.DD format to avoid conflicts with file on laptop vs bbb
-
-FILE_EXT = ".txt" # 3-letter extension (string) of the file to export
-#FILE_PATH = tk_ui_for_path()+"/"		# previously, this was just hardcoded
+FILE_EXT = ".txt" # 3-letter extension (string) of the save file
 MAX_ATTEMPTS = 3  # number of tries to get a non-NaN temperature reading
 VERBOSE = True    # print out any additional comments such as the NaN commentary
 BEAN_TEMP = 68    # initial bean temperature (*F)... this only matters to initialize the running average
-SMOOTH_OVER = 15 # number of readings to average... changing this does change your curve!
+SMOOTH_OVER = 15  # number of readings to average... changing this does change your curve!
 				  # NOTE: this is over the number of readings, not the number of seconds!  See READ_FREQ below.
 
 
 # events occur every n seconds
-READ_FREQ  = 0.1
-SMOOTH_FREQ= 0.1
+READ_FREQ  = 0.2
+SMOOTH_FREQ= 0.2
 PRINT_FREQ = 1
-WRITE_FREQ = 10		# write is functionally a back up frequency
+WRITE_FREQ = 20		# write is functionally a back up frequency
 
 # offset them to ensure they happen in the correct order
 # and to avoid any potential conflicts
@@ -57,10 +54,10 @@ write_next = WRITE_OFFSET
 # this is the dictionary (soon to be JSON object) that will store all sampled data
 # you don't need to print or write it all, but here, it is, nonetheless
 sample = {}
-sample['filepath'] = tk_ui_for_path()
 sample['fileext'] = FILE_EXT
 sample['temp_actual'] = []	# the actual, sampled temperate ('F)
 sample['temp_smooth'] = []	# the smoothed reading (hopefully less noisy than the actual reading)
+sample['starting_wt'] = 0	# the weight of the green beans at the start of the roast (grams)
 #sample['temp_target'] = []	# the target will either be calculated from the profile on the fly or pre-loaded (depending on how you end up dealing with time)
 #sample['Q_in'] = []		# approximation of heat rate based on duty cycle (setpoint) of the heating element... currently 100% of 0%
 #sample['E_heat'] = []		# a fake parameter approximating energy input into the beans, Q_in*dt, right?
@@ -71,38 +68,46 @@ sample['temp_smooth'] = []	# the smoothed reading (hopefully less noisy than the
 
 def get_bean_info():
 	# It returns a dictionary containing information on the bean of interest
-	
-	# Currently it prompts the user for bean information... This can later be replaced with a bean library
-	bean = {}
+	# In the future, this function will just import from a bean library.
+	# Currently it prompts the user for bean information.
 
 	# Generating the bean dicionary keys HERE isn't ideal...
 	# they should be identified elsewhere, preferably with the other VARIABLE definitions at the beginning
+	bean = {}
 	bean['beanName']=raw_input("Enter the name of the bean (example: Ethiopia Sidamo)  ")
 
 	# allows a quick bypass of entering information while testing
-	if bean['beanName']=="": bean['beanName']='TEST'
-	if USE_FAKE_DATA: bean['beanName'] += '_FAKE_DATA'		    
+	if bean['beanName'] == "":
+		bean['beanName'] = 'TEST'
+	if USE_FAKE_DATA:
+		bean['beanName'] += '_FAKE_DATA'		    
 
 	return bean
 
 def get_sample_info():
 	# This is information specific to the roast
-	# It returns a dictionary that will be used to record this roast
+	# It returns a dictionary that will be used to record this roast in progress
 
-	sample = {}
 
 	# Desired information
-	# Generating the sample dicionary keys here isn't ideal...
+	# Generating the sample dicionary keys HERE isn't ideal...
 	# they should be identified elsewhere, perferably with the other VARIABLE definitions at the beginning
-	sample['run']=raw_input("Enter the Run # (example: 5)... ")
+	sample = {}
+	sample['t_ambient'] = get_ambient_f()
+
+
+	sample['starting_wt'] = raw_input("Enter the starting weight in grams (example: 80)... ")
+	sample['run'] = raw_input("Enter the Run # (example: 5)... ")
 
 	# allows a quick bypass of entering information while testing		    
-	if sample['run']=="": sample['run']=99						
+	if sample['run']=="":
+		sample['run']=99
+	if sample['starting_wt']=="":
+		sample['starting_wt']=99
 
 	# converts the run entry from a string to a digit. It's just more predictable that way.  Later processes anticipate this to be a digit.
 	sample['run'] = int(sample['run'])
-
-	sample['t_ambient'] = get_ambient_f()
+	sample['starting_wt'] = int(sample['starting_wt'])
 
 	return sample
 
@@ -119,21 +124,24 @@ def get_ambient_f():
 
 def convert_time(sec):
 	# converts seconds (float) to a human readable mm:ss string
+	# this is only used in the terminal output, not for exporting
 	m = int(sec)/60
-	sec-=m*60
-	s="%02i:%04.1f" % (m,sec)
+	sec -= m*60
+	s = "%02i:%04.1f" % (m, sec)
 	return s
 
 def check_validity(t):
 	# determine if the temperature is a valid value 
 	if math.isnan(t):
 		return False
-	else: return True
+	else:
+		return True
 
 def get_valid_reading(MAX_ATTEMPTS, VERBOSE, USE_FAKE_DATA, elapsed):
 	# attempts to get a single temperature reading ('F)
 	# sensor temperature is vulnerable to NaN so this attempts up to MAX_ATTEMPTS times before giving up
-	# returns a temperature in Fahrenheit and a boolean variable indicating if it is true or not
+	# returns a temperature in Fahrenheit (float) and a boolean variable indicating if it is true or not
+	# is it good practice to be passing in these constants or no?
 	
 	if USE_FAKE_DATA:
 		# get fake data
@@ -179,7 +187,8 @@ def get_valid_reading(MAX_ATTEMPTS, VERBOSE, USE_FAKE_DATA, elapsed):
 		return temp, temp_is_valid
 
 def get_fake_data_point(elapsed):
-	# grabs a data point from a time-temp pair list, based on elapsed time
+	# returns a data point from a time-temp pair list, based on elapsed time
+	# maybe you should just pass it in instead of using global?
 	global fake_data
 
 	i=0
@@ -192,7 +201,7 @@ def get_fake_data_point(elapsed):
 	fake_data = fake_data[i:]
 	return fake_data[0][1]
 
-def new_smoothing(sample_pairs):
+def smooth_data(sample_pairs):
 	# takes a list of samples in for the format [[time, value], [time, value], ...]
 	# performs some smoothing function and returns a single value (not a time, value pair)
 
@@ -204,25 +213,15 @@ def new_smoothing(sample_pairs):
 	return truncate(average_value,1)
 
 def generate_filename(run, nme):
-	# returns the string of a file name, no path, no extension
+	# returns a string to be used as a file name; no path, no extension
 	filename = "Run_%02.i_%s" % (run, nme)
 	# WARNING: this is a little deceptive because we are printing out the file with ext but only returning the filename (no ext)
 	print '\nsaving file as: "%s.%s"' % (filename, FILE_EXT)
 
 	return filename
 
-def get_title(pth, run, nme):
-	# prepares a title string
-	# ... this should probably be more object oriented...
-
-	# grab the internal temperature reading from the MAX31855 board and convert it to Fahrenheit
-	internal = get_ambient_f()
-
-	# return the string
-	return "%s\nRun #%02.i,T_amb=%.1f\n" % (nme, run, internal)
-
 def get_preliminary_temps():
-	# this just prints the ambient and current bean temperatures
+	# this just prints the ambient and current bean temperatures to show the user that everything is working
 
 	# get the ambient temperature 
 	print "T_ambient = %.1f'F" % get_ambient_f()
@@ -233,18 +232,21 @@ def get_preliminary_temps():
 	# remember, the reading could be bad 
 	if temp_is_valid: 
 		print "T_bean = %.1f'F" % temp
-	else: print "WARNING: Thermocouple got an invalid reading!"
-
-	# previously, this all was: 
-	#print "\nT_bean = %.1f'F\t Reading is valid: %s" % get_valid_reading(MAX_ATTEMPTS, VERBOSE)
+	else:
+		print "WARNING: Thermocouple got an invalid reading!"
 
 	return
 
 def welcome_message():
-	# just prints out pertinent information
-	print "="*40
-	print "\nversion: %s\n" % VERSION
+	# just prints out any pertinent information
+	print "\n"
+	print "="*42
+	
+	# print "\nversion: %s\n" % VERSION
+	
 	if USE_FAKE_DATA: print " * * * * * * USING FAKE DATA * * * * * *\n"
+
+	return
 
 def start_sequence():
 	# all the messages that happen before we get going... also allows for the user to begin on command
@@ -261,6 +263,7 @@ def start_sequence():
 
 def load_fake_data():
 	# fake data is for testing without the beaglebone
+	# returns a LIST
 	print "getting fake data from %s" % FAKE_DATA_FILENAME
 
 	# fake data is stored in the same file format as regular roasts. Currently it only includes entries for temp_actual readings (time and temp pairs)
@@ -276,6 +279,7 @@ def load_fake_data():
 def truncate(f, n):
 	# takes a float, returns a float, truncated to n places
 	# just taken from https://stackoverflow.com/questions/783897/truncating-floats-in-python
+	# probably should be moved over to modGregory.py
 	s = '%.12f' % f
 	i, p, d = s.partition('.')
 	# returns a string
@@ -287,13 +291,14 @@ def truncate(f, n):
 # display any relevant information at the start of the program
 welcome_message()
 
+# have the user enter the save location for this roast
+sample['filepath'] = tk_ui_for_path()
+
 # load up the fake data if we need it
 if USE_FAKE_DATA: fake_data = load_fake_data()
 
-
-# pull all the information about this particular bean into the roast file
+# pull all the information about this particular bean and roast into the sample roast file
 sample.update(get_bean_info())
-# sample as already been initiated at the top
 sample.update(get_sample_info())
 
 
@@ -304,21 +309,22 @@ filename = generate_filename(sample['run'],sample['beanName'])	# can be re-purpo
 # store the filename in the bean dictionary... seems risky to let the key and variable name be the same...
 sample['filename'] = filename
 
+# generate the full file and path name, for use with the json dumps, not necessary to store in sample dictionary since all the individual parts are already there and can be inferred
 full_filename = sample['filepath']+sample['filename']+sample['fileext']
 
-# final messages
+# any final messages and go!
 start_sequence()
+
+
+
+
+
 
 # pre-fill the sampled temperature with enough values so we can start smoothing right away (at time 0:00)
 for i in range(SMOOTH_OVER): sample['temp_actual'].append([0.0, BEAN_TEMP])		# assumes beans start at room temperature
 
 # grab the current time for later elapsed time calculations
 t_initial = time.time()
-
-
-
-
-
 
 # and we're up and running...
 try:
@@ -367,7 +373,7 @@ try:
 			
 			# do it
 			# send the last x time-and-temperature pairs to the smoothing function
-			smoothed = new_smoothing(sample['temp_actual'][-SMOOTH_OVER:])
+			smoothed = smooth_data(sample['temp_actual'][-SMOOTH_OVER:])
 
 			# add that value to the sample dictionary
 			sample['temp_smooth'].append([elapsed_trunc, smoothed])
@@ -384,7 +390,7 @@ try:
 
 			# do it
 			# prints the desired info from the sample dictionary to the screen, with formatting
-			print 'Time: %s\tBean: %.1f\tAverage: %.1f\t%s' % (convert_time(elapsed), sample['temp_actual'][-1][1], sample['temp_smooth'][-1][1], fake_message)
+			print 'Time: %s\tBean: %.1f\tAverage: %.1f\t%s' % (convert_time(elapsed), sample['temp_actual'][-1][1], sample['temp_smooth'][-1][1], FAKE_MESSAGE)
 
 			# and then schedule the next event
 			print_next += PRINT_FREQ

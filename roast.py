@@ -57,12 +57,7 @@ write_next = WRITE_OFFSET
 # this is the dictionary (soon to be JSON object) that will store all sampled data
 # you don't need to print or write it all, but here, it is, nonetheless
 sample = {}
-try:
-	sample['filepath'] = tk_ui_for_path()+"/"
-	# this fails when you don't have a $DISPLAY determined, presumably when you are working on the beaglebone headless?
-except:
-	sample['filepath'] = "./"
-	print "\nNo display found.  Save setting location to the current directory."
+sample['filepath'] = tk_ui_for_path()
 sample['fileext'] = FILE_EXT
 sample['temp_actual'] = []	# the actual, sampled temperate ('F)
 sample['temp_smooth'] = []	# the smoothed reading (hopefully less noisy than the actual reading)
@@ -75,20 +70,14 @@ sample['temp_smooth'] = []	# the smoothed reading (hopefully less noisy than the
 # it will make it very easy for graphing scatter plots. More imporantely, list indexes won't have to be coordinated across keys/values within the sample dictionary and we can safely ignore NaN values
 
 def get_bean_info():
-	# Enter bean information... This can later be replaced with a bean library
 	# It returns a dictionary containing information on the bean of interest
-
+	
+	# Currently it prompts the user for bean information... This can later be replaced with a bean library
 	bean = {}
 
-	# Desired information
-	# Generating the bean dicionary keys here isn't ideal...
-	# they should be identified elsewhere, perferably with the other VARIABLE definitions at the beginning
-	info = [['beanName','Ethiopia Sidamo']]
-
-	# builds the bean dictionary by requesting values for each of the desired informations
-	# this really should be in a while loop with exceptions so as to ensure appropriate values
-	for item in info:
-		bean[item[0]]=raw_input("Enter the %s (example: %s)... " % (item[0],item[1]))
+	# Generating the bean dicionary keys HERE isn't ideal...
+	# they should be identified elsewhere, preferably with the other VARIABLE definitions at the beginning
+	bean['beanName']=raw_input("Enter the name of the bean (example: Ethiopia Sidamo)  ")
 
 	# allows a quick bypass of entering information while testing
 	if bean['beanName']=="": bean['beanName']='TEST'

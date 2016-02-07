@@ -27,7 +27,7 @@ if not USE_FAKE_DATA:
 VERSION = "16.02.06"	# just YY.MM.DD format to avoid conflicts with file on laptop vs bbb
 
 FILE_EXT = ".txt" # 3-letter extension (string) of the file to export
-FILE_PATH = tk_ui_for_path()+"/"		# previously, this was just hardcoded
+#FILE_PATH = tk_ui_for_path()+"/"		# previously, this was just hardcoded
 MAX_ATTEMPTS = 3  # number of tries to get a non-NaN temperature reading
 VERBOSE = True    # print out any additional comments such as the NaN commentary
 BEAN_TEMP = 68    # initial bean temperature (*F)... this only matters to initialize the running average
@@ -57,11 +57,16 @@ write_next = WRITE_OFFSET
 # this is the dictionary (soon to be JSON object) that will store all sampled data
 # you don't need to print or write it all, but here, it is, nonetheless
 sample = {}
-#sample['temp_target'] = []	# the target will either be calculated from the profile on the fly or pre-loaded (depending on how you end up dealing with time)
+try:
+	sample['filepath'] = tk_ui_for_path()+"/"
+	# this fails when you don't have a $DISPLAY determined, presumably when you are working on the beaglebone headless?
+except:
+	sample['filepath'] = "./"
+	print "\nNo display found.  Save setting location to the current directory."
+sample['fileext'] = FILE_EXT
 sample['temp_actual'] = []	# the actual, sampled temperate ('F)
 sample['temp_smooth'] = []	# the smoothed reading (hopefully less noisy than the actual reading)
-sample['filepath'] = FILE_PATH
-sample['fileext'] = FILE_EXT
+#sample['temp_target'] = []	# the target will either be calculated from the profile on the fly or pre-loaded (depending on how you end up dealing with time)
 #sample['Q_in'] = []		# approximation of heat rate based on duty cycle (setpoint) of the heating element... currently 100% of 0%
 #sample['E_heat'] = []		# a fake parameter approximating energy input into the beans, Q_in*dt, right?
 #sample['specific_heat']=[]  # totally aspirational, would require knowledge of Qheat or experimentally sampling the bean at various stages (assuming it changes over time)

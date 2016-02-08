@@ -18,12 +18,20 @@ def generate_dict_with_2d(k=4,l=10):
 		d[chr(key+ord('A'))] = temp_list
 	return d
 
-def tk_ui_for_path():
+def tk_ui_for_path(t = "Select the save location"):
 	# Uses a Tkinter UI to select a path. 
 	# Returns a path name as a string.
-	root = Tk()
-	pth = askdirectory(parent=root, title="Select save the location", initialdir = './', mustexist = True)		#tkFileDialog is a part of Tkinter
-	root.destroy()
+	try:
+		print t
+		# this fails when you don't have a $DISPLAY determined, presumably when you are working on the beaglebone headless?
+		root = Tk()
+		pth = askdirectory(parent=root, title=t, initialdir = './', mustexist = True)		#tkFileDialog is a part of Tkinter
+		root.destroy()
+		pth += "/"
+		if pth == "/":
+			raise Exception('You canceled out of the path selection window!')
+	except:
+		pth = "./"
 	return pth
 
 def get_str_from_user(message="Enter the filename with suffix:  ", valid_suffix=['csv','txt']):

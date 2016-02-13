@@ -6,7 +6,9 @@ import json
 profile = {}
 
 # set the basic profile.  Likely this won't have to be more than a dozen points.
-profile['target_temp'] = [[0.0, 70.0], [30.0, 200.0], [60.0, 280.0],[90.0, 315.0], [120.0, 345.0], [150.0, 365.0], [180.0, 385.0], [210.0, 400.0], [240.0, 415.0], [270.0, 430.0], [300.0, 440.0], [330.0, 450.0], [360.0, 455.0], [390.0, 465.0]]
+# CURRENTLY THIS IS THE SETPOINTS FOR ETHIOPIA SIDAMO ROAST #18 FOR RIKKI
+# foreseeable problem: can't compare this with actual roasts because it is called 'target_temp', not 'temp_actual' or whatever...
+profile['target_temp'] = [[0.0, 70.0], [30.0, 190.0], [60.0, 257.0],[90.0, 299.0], [120.0, 328.0], [150.0, 349.0], [180.0, 369.0], [210.0, 385.0], [240.0, 397.0], [270.0, 413.0], [300.0, 426.0], [330.0, 436.0], [360.0, 445.0], [390.0, 456.0], [420, 465.0], [430, 467.0]]
 
 # set bounds of acceptable temperatures
 # this is a really basic way to do this. In the future, you may want to have a large window at first and narrow it down as you go along

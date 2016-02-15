@@ -191,7 +191,7 @@ def main():
 
 	# as long as you actually picked some files, proceed.
 	if len(all_roasts)>0:
-		available_data = ['temp_actual', 'temp_smooth']			# more could go here but i need error handling for the files that don't have keys with these legend_names
+		available_data = ['temp_actual', 'temp_smooth', 'upper_bound','lower_bound', 'target_temp']			# more could go here but i need error handling for the files that don't have keys with these legend_names
 
 
 		# variable_locker = []				

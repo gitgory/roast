@@ -5,6 +5,20 @@ from random import randint
 from Tkinter import *
 from tkFileDialog import askdirectory
 
+def function_format():
+    """
+    <ACTION>
+
+    Args:
+        
+
+    Returns: 
+        
+
+    Raises:
+    """
+    pass
+
 def generate_dict_with_2d(k=4,l=10):
 	# This function is only used for generating a dictionary for the purpose of testing.
 	# Generates and returns a dictionary with k keys.

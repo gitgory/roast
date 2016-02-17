@@ -8,15 +8,14 @@ from modGregory import tk_ui_for_path
 # Use fake data for testing the script when you don't have the beaglebone.
 USING_FAKE_DATA = True
 FAKE_DATA_FILENAME = './fake_data.txt'
-FAKE_MESSAGE = "* FAKE *"        # Display this message when using fake data.
-fake_data = []        # Not a constant but must be initiated early b/c it is
-                    # actually assigned a meaningful value inside of a function
+FAKE_MESSAGE = "* FAKE *"    # Display this message when using fake data.
+fake_data = []               # Not a constant but must be initiated early because it is actually
+                             # assigned a meaningful value inside of a function and a global var
 
 if not USING_FAKE_DATA:
 
-    # None of the followingwill work if you aren't running the script
-    # on the beaglebone, so leave it out.
-    # Taken directly from MAX31855 Example on Adafruit.com
+    # None of the following will work if you aren't running the script on the beaglebone,
+    # so leave it out. Taken directly from MAX31855 Example on Adafruit.com
     import Adafruit_GPIO.SPI as SPI
     import Adafruit_MAX31855.MAX31855 as MAX31855
 
@@ -38,70 +37,29 @@ BEAN_TEMP = 68    # Initial bean temperature (*F). Only used to initialize a run
 SMOOTH_OVER = 15  # The number of readings to average over. Changing this DOES change your curve!
                   # This is number of readings, not the number of seconds!  See READ_FREQ below.
 
-
 # events occur every n seconds
 READ_FREQ  = 0.2
 SMOOTH_FREQ= 0.2
 PRINT_FREQ = 1
-WRITE_FREQ = 30        # write is functionally a back up frequency
+WRITE_FREQ = 30   # write is functionally a back up frequency
 
-# offset them to ensure they happen in the correct order
-# and to avoid any potential conflicts
+# offset them to ensure they happen in the correct order and to avoid any potential conflicts
 READ_OFFSET  = 0
 SMOOTH_OFFSET= 0
 PRINT_OFFSET = 0
-WRITE_OFFSET = 4	# while testing, you want to see the data before the first WRITE_FREQ trigger.
+WRITE_OFFSET = 4    # while testing, you'll want to see the data before the first WRITE_FREQ trigger
 
-# this is the dictionary (soon to be JSON object) that will store all sampled data
-# you don't need to print or write it all, but here, it is, nonetheless
-sample = {}
-sample['temp_actual'] = []    # the actual, sampled temperate ('F)
-sample['temp_smooth'] = []    # the smoothed reading (hopefully less noisy than the actual reading)
-sample['starting_wt'] = 0     # the weight of the green beans at the start of the roast (grams)
-sample['comments'] = ""       # a place to store comments
 
-# the following are aspirational:
-#sample['temp_target'] = []   # the target will either be calculated from the profile on the fly or pre-loaded (depending on how you end up dealing with time)
-#sample['Q_in'] = []          # Approx. of heat rate based on duty cycle of the heating element.Currently its either 100% or 0%
-#sample['E_heat'] = []        # a fake parameter approximating energy input into the beans, Q_in*dt, right?
-#sample['specific_heat']=[]  # totally aspirational, would require knowledge of Qheat or experimentally sampling the bean at various stages (assuming it changes over time)
 
-# Each sensor reading will store the sample time and sample value:
-# e.g. sample['temp_actual'] = [[0.00, 68.1], ...] to indicate seconds, and temperatures.
-# This isn't pretty in the export file but that really doesn't need to be human readable.
-# It will make it very easy for graphing scatter plots.
-# More imporantely, list indexes won't have to be coordinated across keys/values
-# within the sample dictionary and we can safely ignore NaN values
 
-def welcome_message():
-    """
-    Displays to terminal any pertinent information at the start of the script.
 
-    Args:
-        USING_FAKE_DATA
-
-    Returns:
-        None.       
-
-    Raises:
-        None.
-    """
-
-    print "\n"
-    print "="*42
-    
-    # print "\nversion: %s\n" % VERSION
-    
-    if USING_FAKE_DATA: print " * * * * * * USING FAKE DATA * * * * * *\n"
-
-    return
 
 def load_fake_data():
     """
     Pre-loads the fake data set into a 2D list.
     Fake data is is for testing the script without a beaglebone.
 
-    Args:
+    Parameters:
         FAKE_DATA_FILENAME
         fake_data (global): previously an empty [], 
 
@@ -127,11 +85,83 @@ def load_fake_data():
     fake_data = use_this_data
     return
 
+def welcome_message():
+    """
+    Displays to terminal any pertinent information at the start of the script.
+
+    Parameters:
+        USING_FAKE_DATA
+
+    Returns:
+        None.       
+
+    Raises:
+        None.
+    """
+
+    print "\n"
+    print "="*42
+    
+    # print "\nversion: %s\n" % VERSION
+    
+    if USING_FAKE_DATA: print " * * * * * * USING FAKE DATA * * * * * *\n"
+
+    return
+
+def generate_sample_dict():
+    """
+    Initiates all the basic elements of the dictionary to record the roast event
+
+    Parameters:
+        BEAN_TEMP
+        SMOOTH_OVER
+
+    Returns: 
+        temp_dict: (dict) containing all the basic bits of information required for the roast, 
+            or at least all the keys initiated.
+
+    Raises:
+        None.
+    """
+
+    temp_dict = {}
+
+    # Temperature sensors reading will store the sample time and sample value:
+    # e.g. sample['temp_actual'] = [[0.00, 68.1], ...] to indicate seconds, and temperatures.
+    # This isn't pretty in the export file but that really doesn't need to be human readable.
+    # It will make it very easy for graphing scatter plots.
+    # More imporantely, list indexes won't have to be coordinated across keys/values
+    # within the sample dictionary and we can safely ignore NaN values
+    temp_dict['temp_actual'] = []    # the actual, sampled temperate ('F)
+    temp_dict['temp_smooth'] = []    # the smoothed reading (hopefully less noisy than the actual reading)
+
+    # the following are aspirational sensors and calculations:
+    #temp_dict['temp_target'] = []   # the target will either be calculated from the profile on the fly or pre-loaded (depending on how you end up dealing with time)
+    #temp_dict['Q_in'] = []          # Approx. of heat rate based on duty cycle of the heating element.Currently its either 100% or 0%
+    #temp_dict['E_heat'] = []        # a fake parameter approximating energy input into the beans, Q_in*dt, right?
+    #temp_dict['specific_heat']=[]   # would require knowledge of Qheat or experimentally sampling the bean at various stages (assuming it changes over time)
+
+    # pre-fill the temperature readings with enough values so we can start smoothing
+    # right away (at time 0:00)... assumes beans start at room temperature
+    for i in range(SMOOTH_OVER):
+        temp_dict['temp_actual'].append([0.0, BEAN_TEMP])
+
+    temp_dict['filepath'] = tk_ui_for_path()  # have the user enter the save location for this roast
+
+    # pull all the information about this particular bean and roast into the sample roast file
+    temp_dict.update(get_bean_info())            # pull in information on the bean to the sample roast file
+    temp_dict.update(get_sample_info())          # pull in information on the batch to the sample roast file
+    temp_dict.update(generate_filename(temp_dict))  # add a generated filename, path, and extension
+
+    temp_dict['comments'] = raw_input("Enter optional roast comments or <Enter> to continue:  ")+" "
+
+    return temp_dict
+
 def get_bean_info():
     """
     Grabs information about the bean, including name, but potentially order date, region, etc.
 
-    Args:
+    Parameters:
         USING_FAKE_DATA
 
     Returns: 
@@ -160,7 +190,7 @@ def get_sample_info():
     """
     Grab information on this particular roasting event.
 
-    Args:
+    Parameters:
         None.
 
     Returns: 
@@ -199,7 +229,7 @@ def generate_filename(original_dict):
     Creates a dictionary containing a file name (str)
     and a full file name (including path and extension)
 
-    Args:
+    Parameters:
         original_dict: (dict), assumed to contain bean information already
         FILE_EXT
 
@@ -231,7 +261,7 @@ def display_preliminary_temps():
     """
     Prints ambient and current bean temperatures (Fahrenheit) to show that everything is working.
 
-    Args:
+    Parameters:
         None.
 
     Returns:
@@ -253,11 +283,20 @@ def display_preliminary_temps():
     else:
         print "WARNING: Thermocouple got an invalid reading!"
 
+def wait_for_user():
+	""" Just a simple break to allow the user to determine when we proceed.
+	"""
+
+	wait=raw_input("\nHit <ENTER> to being...")    # wait for the user to say "Go"
+	print '\nPress Ctrl-C to quit.\n'    
+
+	return
+
 def get_ambient_f():
     """
     Grabs the ambient temperature reading (Fahrenheit) at the MAX31855 chip
 
-    Args:
+    Parameters:
         USING_FAKE_DATA
 
     Returns:
@@ -278,7 +317,7 @@ def convert_time(sec):
 
     Currently, it is only used for terminal output, not exporting.
 
-    Args:
+    Parameters:
         None.
 
     Returns: 
@@ -310,7 +349,7 @@ def get_valid_reading(elapsed):
     Sensor temperature is vulnerable to NaN so this attempts
     up to MAX_ATTEMPTS times before giving up, indicated by returning temp_is_valid == False.
 
-    Args:
+    Parameters:
         elapsed: (float) time in seconds since start
         USING_FAKE_DATA
         MAX_ATTEMPTS
@@ -330,8 +369,8 @@ def get_valid_reading(elapsed):
         # get fake data
         temp = get_fake_data_point(elapsed)
         return temp, True         # WARNING: this assumes you have valid data... you aren't testing what happens when you get a NaN...
-                                # It might be of value to allow the fake data to contain NaN and then pass it through the rest of the get_valid_reading function
-                                # so you can imitate more accurately actual readings from a sensor... you can test how your system handles NaN without BBB
+                                  # It might be of value to allow the fake data to contain NaN and then pass it through the rest of the get_valid_reading function
+                                  # so you can imitate more accurately actual readings from a sensor... you can test how your system handles NaN without BBB
 
     else:
         # get real data
@@ -371,7 +410,7 @@ def get_fake_data_point(elapsed):
     """
     Grabs a data point from a time-temp pair list, based on elapsed time.
 
-    Args:
+    Parameters:
         elapsed: (float) time in seconds since start        
         FAKE_DATA
 
@@ -404,7 +443,7 @@ def smooth_data(sample_pairs):
 
     Currently, it is just an average.  Obviously this creates a lag.
 
-    Args:
+    Parameters:
         sample_pairs: a 2D list in for the format [[time, value], [time, value], ...]
 
     Returns: 
@@ -424,7 +463,7 @@ def truncate(f, n):
     Truncates a float to n places (not rounding)
     Source: https://stackoverflow.com/questions/783897/truncating-floats-in-python
 
-    Args:
+    Parameters:
         f: (float) the value to be truncated
         n: (int) the number of places to keep
 
@@ -445,7 +484,7 @@ def calc_loss_percent(wt_start, wt_finish):
     """
     Calculates the percentage of change.
 
-    Args:
+    Parameters:
         wt_start: (float) the initial weight
         wt_finish: (float) the fial weight
         
@@ -468,7 +507,7 @@ def closing_sequence(original_dict):
 
     BEWARE: if you are using this to update another dictionary, know that ".update()" overwrites any common keys
 
-    Args:
+    Parameters:
         original_dict: (dict) the sample dictionary
             (This is only used to poll 'starting_wt' so far)
         
@@ -493,6 +532,11 @@ def closing_sequence(original_dict):
 
             print "mass loss: %.f%%" % loss_percent
             temp_dict['percent_loss'] = loss_percent
+
+            final_comments = raw_input("Enter optional roast comments or <Enter> to continue:  ")
+            if final_comments: 
+            	temp_dict['comments'] = original_dict['comments'] + final_comments
+
             break
         except ValueError:
             print "Invalid entry. Enter a number."
@@ -504,39 +548,24 @@ def closing_sequence(original_dict):
 
 
 
-def main():
+   
+if __name__ == "__main__":
     # initiate the first due dates.  This could be done earlier on but then we tend
-    # to get UnboundLocalError due to the += assignment tha thappens for each event.
+    # to get UnboundLocalError due to the += assignment that thappens for each event.
     # alternatively, they could all be marked global but that seems sketchy too.
     read_next  = READ_OFFSET
     smooth_next= SMOOTH_OFFSET
     print_next = PRINT_OFFSET
     write_next = WRITE_OFFSET
 
-    # pre-fill the sampled temperature with enough values so we can start smoothing right away (at time 0:00)
-    for i in range(SMOOTH_OVER): sample['temp_actual'].append([0.0, BEAN_TEMP])        # assumes beans start at room temperature
-
-
-
+    if USING_FAKE_DATA: load_fake_data()    
 
 
 
     welcome_message()
-
-    sample['filepath'] = tk_ui_for_path()    # have the user enter the save location for this roast
-
-    if USING_FAKE_DATA: load_fake_data()    
-
-    # pull all the information about this particular bean and roast into the sample roast file
-    sample.update(get_bean_info())            # pull in information on the bean to the sample roast file
-    sample.update(get_sample_info())          # pull in information on the batch to the sample roast file
-    sample.update(generate_filename(sample))  # add a generated filename, path, and extension
-
-    sample['comments'] += raw_input("Enter optional roast comments or <Enter> to continue:   ") + " "
-
-    display_preliminary_temps()    # display the current temperatures before we get going
-    wait=raw_input("\nHit <ENTER> to being...")    # wait for the user to say "Go"
-    print '\nPress Ctrl-C to quit.\n'    # final messages as we start
+    sample = generate_sample_dict()
+    display_preliminary_temps()
+    wait_for_user()
 
 
 
@@ -551,23 +580,21 @@ def main():
             # determine how much time has elapsed (seconds)
             elapsed = time.time() - t_initial
 
-            # we don't need all that accuracy when storing data so we'll work with a truncated version of it
+            # we don't need all that accuracy so we'll work with a truncated version of it
             elapsed_trunc = truncate(elapsed,3)
 
 
             # four events happen in this loop: READ, SMOOTH, PRINT, and WRITE
             # the basic flow goes like this:
-            # if we have reached or passed the due date (total elapsed time in seconds) for the event:
+            # if we reached or passed the due date (total elapsed time in seconds) for the event:
                 # do it
                 # then determine the next time this event will be run
 
 
 
             # READ SENSORS
-            # if we have reached the due date for the event
             if elapsed >= read_next:
-                
-                # do it
+
                 # grab the temperature from the sensor
                 temp, temp_is_valid = get_valid_reading(elapsed)
                 
@@ -575,64 +602,48 @@ def main():
                 if temp_is_valid:
                     sample['temp_actual'].append([elapsed_trunc, temp])
                 else:
-                    # we're fine just ignoring bad readings, the time-series approach for storing samples facilitates this
+                    # we're fine just ignoring bad readings,
+                    # the time-series approach for storing samples facilitates this
                     pass
 
-                # and then schedule the next event
                 read_next += READ_FREQ
 
 
-
-
             # SMOOTHING DATA
-            # the sensor reading is really noisy and jumps around a lot. It's not reliable to use for controlling yet.  It must be smoothed my some means.
-            # if we have reached the due date for the event
+            # the sensor reading is really noisy and jumps around a lot.
+            # It's not reliable to use for controlling yet.  It must be smoothed my some means.
             if elapsed >= smooth_next:
                 
-                # do it
                 # send the last x time-and-temperature pairs to the smoothing function
                 smoothed = smooth_data(sample['temp_actual'][-SMOOTH_OVER:])
 
                 # add that value to the sample dictionary
                 sample['temp_smooth'].append([elapsed_trunc, smoothed])
 
-                # and then schedule the next event
                 smooth_next += SMOOTH_FREQ
 
 
-
-
             # PRINT TO TERMINAL
-            # if we have reached the due date for the event
             if elapsed >= print_next:
 
-                # do it
                 # prints the desired info from the sample dictionary to the screen, with formatting
                 print 'Time: %s\tBean: %.1f\tAverage: %.1f\t%s' % (convert_time(elapsed), sample['temp_actual'][-1][1], sample['temp_smooth'][-1][1], FAKE_MESSAGE)
 
-                # and then schedule the next event
                 print_next += PRINT_FREQ
 
 
-
-
-
             # WRITE TO FILE
-            # this is the export file.  If you knew that the program wouldn't crash,
-            # you could just do this once, at the end.  
-            # Until, then, it "backs up" the sample dictionary on the WRITE_FREQ interval
-            # if we have reached the due date for the event
+            # this is the export file.  If you knew that the program wouldn't crash, you could just
+            # do this once, at the end.   Until then, it "backs up" the sample dictionary on
+            # the WRITE_FREQ interval if we reached the due date for the next event.
             if elapsed >= write_next:
-                
-                # do it
-                # writes the data to a file
+
                 # this really should use the WITH statement
                 # from: https://stackoverflow.com/questions/11026959/python-writing-dict-to-txt-file-and-reading-dict-from-txt-file
                 json.dump(sample, open(sample['full_filename'], 'w'))
 
                 # and then schedule the next event
                 write_next += WRITE_FREQ
-
 
 
     except KeyboardInterrupt:
@@ -642,22 +653,13 @@ def main():
 
 
 
-
-
     # add post-roast data, calculations, and comments
     sample.update(closing_sequence(sample))
 
-    # currently this additional comment section lives outside of closing_sequence 
-    # because the .update() method would overwrite the original comments.
-    sample['comments'] += raw_input("Enter optional roast comments or <Enter> to continue:   ")
-
-
-
-
-
-
-    # do a final write to the output file so as not to lose the last bit of data that may have accumulated since the last write and post-roast additions
+    # do a final write to the output file so as not to lose the last bit of data that may have
+    # accumulated since the last write and post-roast additions as well as the closing_sequence().
     json.dump(sample, open(sample['full_filename'], 'w'))
     print "\ncomplete.\n"
 
-main()
+
+

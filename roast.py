@@ -522,6 +522,10 @@ def closing_sequence(original_dict):
     # determine final weight of the beans
     while True:
         try:
+            final_comments = raw_input("Enter optional roast comments or <Enter> to continue:  ")
+            if final_comments: 
+            	temp_dict['comments'] = original_dict['comments'] + final_comments
+
             query = raw_input("Enter the final weight in grams (example: 80)... ")
             if query == "":
                 # enters an a nonsense value for rapid testing/bypass
@@ -533,10 +537,6 @@ def closing_sequence(original_dict):
             print "mass loss: %.f%%" % loss_percent
             temp_dict['percent_loss'] = loss_percent
 
-            final_comments = raw_input("Enter optional roast comments or <Enter> to continue:  ")
-            if final_comments: 
-            	temp_dict['comments'] = original_dict['comments'] + final_comments
-
             break
         except ValueError:
             print "Invalid entry. Enter a number."
@@ -546,7 +546,7 @@ def closing_sequence(original_dict):
 
 
 
-
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
 
    
 if __name__ == "__main__":

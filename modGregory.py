@@ -86,3 +86,62 @@ def dict2csv(my_dict, title="some header", only_export=[''], subscript1="_x", su
             if it_worked == False:
                 print "export complete.\n"
                 break
+
+def convert_time(sec):
+    """
+    Converts seconds (float) to a human readable string
+
+    Currently, it is only used for terminal output, not exporting.
+
+    Parameters:
+        None.
+
+    Returns: 
+        s: a string in the format mm:ss.0
+
+    Raises:
+        None.
+    """
+
+    m = int(sec)/60
+    sec -= m*60
+    s = "%02i:%04.1f" % (m, sec)
+    return s
+
+def wait_for_user():
+    """ Just a simple break to allow the user to determine when we proceed.
+    """
+
+    wait=raw_input("\nHit <ENTER> to being...")    # wait for the user to say "Go"
+    print '\nPress Ctrl-C to quit.\n'    
+
+    return
+
+def truncate(f, n):
+    """
+    Truncates a float to n places (not rounding)
+    Source: https://stackoverflow.com/questions/783897/truncating-floats-in-python
+
+    Parameters:
+        f: (float) the value to be truncated
+        n: (int) the number of places to keep
+
+    Returns:
+        (float) the truncated value        
+
+    Raises:
+        None.
+    """
+
+    # probably should be moved over to modGregory.py
+    s = '%.12f' % f
+    i, p, d = s.partition('.')
+
+    return float('.'.join([i, (d+'0'*n)[:n]]))
+
+
+
+def c_to_f(c):
+    """ Takes a celsius (float) and returns a fahrenheit (float)
+    """
+    return c * 9.0 / 5.0 + 32.0

@@ -3,7 +3,8 @@
 import time
 import math
 import json
-from modGregory import tk_ui_for_path
+# from modGregory import tk_ui_for_path
+from modGregory import *
 
 # Use fake data for testing the script when you don't have the beaglebone.
 USING_FAKE_DATA = True
@@ -53,10 +54,10 @@ WRITE_OFFSET = 4    # while testing, you'll want to see the data before the firs
 # 'bean'   = the characteristics of the green beans, ex: Sidamo
 # 'sample' = the data read by a sensor in [[time, value],...] pairs, ex: [[10.0, 99.5],...] 
 # 'batch'  = specific to the particular run, ex: batch #21, 80g
-#			 NOTE: sampled data is stored in the batch dictionary
+#             NOTE: sampled data is stored in the batch dictionary
 # 'roast'  = the big picture, the process, or possibly interchangeable with 'batch'
 # 'profile'= the desired temperature over the course of the roast... a profile is no different in format from a batch
-#			 in fact, a batch could be used as a profile
+#             in fact, a batch could be used as a profile
 
 
 
@@ -92,23 +93,11 @@ def load_fake_data():
     return
 
 def welcome_message():
-    """
-    Displays to terminal any pertinent information at the start of the script.
-
-    Parameters:
-        USING_FAKE_DATA
-
-    Returns:
-        None.       
-
-    Raises:
-        None.
+    """Displays to terminal any pertinent information at the start of the script.
     """
 
     print "\n"
     print "="*42
-    
-    # print "\nversion: %s\n" % VERSION
     
     if USING_FAKE_DATA: print " * * * * * * USING FAKE DATA * * * * * *\n"
 
@@ -141,7 +130,7 @@ def generate_batch_dict():
     temp_dict['temp_actual'] = []    # the actual, sampled temperate ('F)
     temp_dict['temp_smooth'] = []    # the smoothed reading (hopefully less noisy than the actual reading)
 
-    # the following are aspirational sensors and calculations:
+    # the following are aspirational (future implementations) sensors and calculations:
     #temp_dict['temp_target'] = []   # the target will either be calculated from the profile on the fly or pre-loaded (depending on how you end up dealing with time)
     #temp_dict['Q_in'] = []          # Approx. of heat rate based on duty cycle of the heating element.Currently its either 100% or 0%
     #temp_dict['E_heat'] = []        # a fake parameter approximating energy input into the beans, Q_in*dt, right?
@@ -232,8 +221,8 @@ def get_batch_info():
 
 def generate_filename(original_dict):
     """
-    Creates a dictionary containing a file name (str)
-    and a full file name (including path and extension)
+    Creates a dictionary containing a file name (str) based on bean
+    information and a full file name (including path and extension)
 
     Parameters:
         original_dict: (dict), assumed to contain bean information already
@@ -247,7 +236,7 @@ def generate_filename(original_dict):
     """
     temp_dict = {}
     temp_dict['fileext'] = FILE_EXT
-    filename = "Run_%02.i_%s" % (original_dict['run'],original_dict['beanName'])
+    filename = "Batch_%02.i_%s" % (original_dict['run'],original_dict['beanName'])
 
     temp_dict['filename'] = filename
     temp_dict['full_filename'] = original_dict['filepath']+temp_dict['filename']+temp_dict['fileext']
@@ -257,11 +246,6 @@ def generate_filename(original_dict):
     print '\nsaving file as: "%s%s"' % (filename, FILE_EXT)
 
     return temp_dict
-
-def c_to_f(c):
-    """ Takes a celsius (float) and returns a fahrenheit (float)
-    """
-    return c * 9.0 / 5.0 + 32.0
 
 def display_preliminary_temps():
     """
@@ -289,15 +273,6 @@ def display_preliminary_temps():
     else:
         print "WARNING: Thermocouple got an invalid reading!"
 
-def wait_for_user():
-	""" Just a simple break to allow the user to determine when we proceed.
-	"""
-
-	wait=raw_input("\nHit <ENTER> to being...")    # wait for the user to say "Go"
-	print '\nPress Ctrl-C to quit.\n'    
-
-	return
-
 def get_ambient_f():
     """
     Grabs the ambient temperature reading (Fahrenheit) at the MAX31855 chip
@@ -316,27 +291,6 @@ def get_ambient_f():
         return 68.1
     else:
         return c_to_f(sensor.readInternalC())
-
-def convert_time(sec):
-    """
-    Converts seconds (float) to a human readable string
-
-    Currently, it is only used for terminal output, not exporting.
-
-    Parameters:
-        None.
-
-    Returns: 
-        s: a string in the format mm:ss.0
-
-    Raises:
-        None.
-    """
-
-    m = int(sec)/60
-    sec -= m*60
-    s = "%02i:%04.1f" % (m, sec)
-    return s
 
 def check_validity(t):
     """ Determine if the temperature is a valid value
@@ -464,28 +418,6 @@ def smooth_data(sampled_pairs):
     # returns a single value
     return truncate(average_value,1)
 
-def truncate(f, n):
-    """
-    Truncates a float to n places (not rounding)
-    Source: https://stackoverflow.com/questions/783897/truncating-floats-in-python
-
-    Parameters:
-        f: (float) the value to be truncated
-        n: (int) the number of places to keep
-
-    Returns:
-        (float) the truncated value        
-
-    Raises:
-        None.
-    """
-
-    # probably should be moved over to modGregory.py
-    s = '%.12f' % f
-    i, p, d = s.partition('.')
-
-    return float('.'.join([i, (d+'0'*n)[:n]]))
-
 def calc_loss_percent(wt_start, wt_finish):
     """
     Calculates the percentage of change.
@@ -530,7 +462,7 @@ def closing_sequence(original_dict):
         try:
             final_comments = raw_input("Enter optional roast comments or <Enter> to continue:  ")
             if final_comments: 
-            	temp_dict['comments'] = original_dict['comments'] + final_comments
+                temp_dict['comments'] = original_dict['comments'] + final_comments
 
             query = raw_input("Enter the final weight in grams (example: 80)... ")
             if query == "":
@@ -553,7 +485,7 @@ def closing_sequence(original_dict):
 
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-
+    
    
 if __name__ == "__main__":
     # initiate the first due dates.  This could be done earlier on but then we tend

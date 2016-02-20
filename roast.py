@@ -49,8 +49,14 @@ SMOOTH_OFFSET= 0
 PRINT_OFFSET = 0
 WRITE_OFFSET = 4    # while testing, you'll want to see the data before the first WRITE_FREQ trigger
 
-
-
+# DEFINITIONS FOR CLARITY:
+# 'bean'   = the characteristics of the green beans, ex: Sidamo
+# 'sample' = the data read by a sensor in [[time, value],...] pairs, ex: [[10.0, 99.5],...] 
+# 'batch'  = specific to the particular run, ex: batch #21, 80g
+#			 NOTE: sampled data is stored in the batch dictionary
+# 'roast'  = the big picture, the process, or possibly interchangeable with 'batch'
+# 'profile'= the desired temperature over the course of the roast... a profile is no different in format from a batch
+#			 in fact, a batch could be used as a profile
 
 
 
@@ -108,7 +114,7 @@ def welcome_message():
 
     return
 
-def generate_sample_dict():
+def generate_batch_dict():
     """
     Initiates all the basic elements of the dictionary to record the roast event
 
@@ -127,11 +133,11 @@ def generate_sample_dict():
     temp_dict = {}
 
     # Temperature sensors reading will store the sample time and sample value:
-    # e.g. sample['temp_actual'] = [[0.00, 68.1], ...] to indicate seconds, and temperatures.
+    # e.g. batch['temp_actual'] = [[0.00, 68.1], ...] to indicate seconds, and temperatures.
     # This isn't pretty in the export file but that really doesn't need to be human readable.
     # It will make it very easy for graphing scatter plots.
     # More imporantely, list indexes won't have to be coordinated across keys/values
-    # within the sample dictionary and we can safely ignore NaN values
+    # within the batch dictionary and we can safely ignore NaN values
     temp_dict['temp_actual'] = []    # the actual, sampled temperate ('F)
     temp_dict['temp_smooth'] = []    # the smoothed reading (hopefully less noisy than the actual reading)
 
@@ -146,12 +152,12 @@ def generate_sample_dict():
     for i in range(SMOOTH_OVER):
         temp_dict['temp_actual'].append([0.0, BEAN_TEMP])
 
-    temp_dict['filepath'] = tk_ui_for_path()  # have the user enter the save location for this roast
+    temp_dict['filepath'] = tk_ui_for_path()  # have the user enter the save location for this batch
 
-    # pull all the information about this particular bean and roast into the sample roast file
-    temp_dict.update(get_bean_info())            # pull in information on the bean to the sample roast file
-    temp_dict.update(get_sample_info())          # pull in information on the batch to the sample roast file
-    temp_dict.update(generate_filename(temp_dict))  # add a generated filename, path, and extension
+    # pull all the information about this particular bean and roast so it can be added into the batch roast file
+    temp_dict.update(get_bean_info())
+    temp_dict.update(get_batch_info())
+    temp_dict.update(generate_filename(temp_dict))
 
     temp_dict['comments'] = raw_input("Enter optional roast comments or <Enter> to continue:  ")+" "
 
@@ -186,7 +192,7 @@ def get_bean_info():
 
     return bean
 
-def get_sample_info():
+def get_batch_info():
     """
     Grab information on this particular roasting event.
 
@@ -194,35 +200,35 @@ def get_sample_info():
         None.
 
     Returns: 
-        sample: a dictionary 
+        temp_dict: a dictionary with info specific to the batch (run)
 
     Raises:
         None.
     """
-    # This is information specific to the roast
+    # This is information specific to this particular batch
     # It returns a dictionary that will be used to record this roast in progress
 
 
     # Desired information
-    # Generating the sample dicionary keys HERE isn't ideal...
+    # Generating the batch dicionary keys HERE isn't ideal...
     # they should be identified elsewhere, perferably with the other VARIABLE definitions at the beginning
-    sample = {}
-    sample['t_ambient'] = get_ambient_f()
+    temp_dict = {}
+    temp_dict['t_ambient'] = get_ambient_f()
 
-    sample['starting_wt'] = raw_input("Enter the starting weight in grams (example: 80)... ")
-    sample['run'] = raw_input("Enter the Run # (example: 5)... ")
+    temp_dict['starting_wt'] = raw_input("Enter the starting weight in grams (example: 80)... ")
+    temp_dict['run'] = raw_input("Enter the Run # (example: 5)... ")
 
     # allows a quick bypass of entering information while testing            
-    if sample['run']=="":
-        sample['run']=99
-    if sample['starting_wt']=="":
-        sample['starting_wt']=99
+    if temp_dict['run']=="":
+        temp_dict['run']=99
+    if temp_dict['starting_wt']=="":
+        temp_dict['starting_wt']=99
 
     # converts the run entry from a string to a digit. It's just more predictable that way.  Later processes anticipate this to be a digit.
-    sample['run'] = int(sample['run'])
-    sample['starting_wt'] = int(sample['starting_wt'])
+    temp_dict['run'] = int(temp_dict['run'])
+    temp_dict['starting_wt'] = int(temp_dict['starting_wt'])
 
-    return sample
+    return temp_dict
 
 def generate_filename(original_dict):
     """
@@ -437,14 +443,14 @@ def get_fake_data_point(elapsed):
     fake_data = fake_data[i:]
     return fake_data[0][1]
 
-def smooth_data(sample_pairs):
+def smooth_data(sampled_pairs):
     """
     Performs some smoothing function and returns a single value (not a time, value pair)
 
     Currently, it is just an average.  Obviously this creates a lag.
 
     Parameters:
-        sample_pairs: a 2D list in for the format [[time, value], [time, value], ...]
+        sampled_pairs: a 2D list in for the format [[time, value], [time, value], ...]
 
     Returns: 
         
@@ -452,7 +458,7 @@ def smooth_data(sample_pairs):
     Raises:
     """
     
-    all_the_values = [x[1] for x in sample_pairs]
+    all_the_values = [x[1] for x in sampled_pairs]
     average_value = sum(all_the_values) / float(len(all_the_values))
 
     # returns a single value
@@ -508,11 +514,11 @@ def closing_sequence(original_dict):
     BEWARE: if you are using this to update another dictionary, know that ".update()" overwrites any common keys
 
     Parameters:
-        original_dict: (dict) the sample dictionary
+        original_dict: (dict) the batch dictionary
             (This is only used to poll 'starting_wt' so far)
         
     Returns: 
-        temp_dict: (dict) the additional items which can then be used to update the primary (sample) dictionary
+        temp_dict: (dict) the additional items which can then be used to update the primary (batch) dictionary
 
     Raises:
         ValueError: if an non-numerical number is entered as the final weight.
@@ -563,7 +569,7 @@ if __name__ == "__main__":
 
 
     welcome_message()
-    sample = generate_sample_dict()
+    batch = generate_batch_dict()
     display_preliminary_temps()
     wait_for_user()
 
@@ -598,12 +604,12 @@ if __name__ == "__main__":
                 # grab the temperature from the sensor
                 temp, temp_is_valid = get_valid_reading(elapsed)
                 
-                # write it to the sample dictionary
+                # write it to the batch dictionary
                 if temp_is_valid:
-                    sample['temp_actual'].append([elapsed_trunc, temp])
+                    batch['temp_actual'].append([elapsed_trunc, temp])
                 else:
                     # we're fine just ignoring bad readings,
-                    # the time-series approach for storing samples facilitates this
+                    # the time-series approach for storing batchs facilitates this
                     pass
 
                 read_next += READ_FREQ
@@ -615,10 +621,10 @@ if __name__ == "__main__":
             if elapsed >= smooth_next:
                 
                 # send the last x time-and-temperature pairs to the smoothing function
-                smoothed = smooth_data(sample['temp_actual'][-SMOOTH_OVER:])
+                smoothed = smooth_data(batch['temp_actual'][-SMOOTH_OVER:])
 
-                # add that value to the sample dictionary
-                sample['temp_smooth'].append([elapsed_trunc, smoothed])
+                # add that value to the batch dictionary
+                batch['temp_smooth'].append([elapsed_trunc, smoothed])
 
                 smooth_next += SMOOTH_FREQ
 
@@ -626,21 +632,21 @@ if __name__ == "__main__":
             # PRINT TO TERMINAL
             if elapsed >= print_next:
 
-                # prints the desired info from the sample dictionary to the screen, with formatting
-                print 'Time: %s\tBean: %.1f\tAverage: %.1f\t%s' % (convert_time(elapsed), sample['temp_actual'][-1][1], sample['temp_smooth'][-1][1], FAKE_MESSAGE)
+                # prints the desired info from the batch dictionary to the screen, with formatting
+                print 'Time: %s\tBean: %.1f\tAverage: %.1f\t%s' % (convert_time(elapsed), batch['temp_actual'][-1][1], batch['temp_smooth'][-1][1], FAKE_MESSAGE)
 
                 print_next += PRINT_FREQ
 
 
             # WRITE TO FILE
             # this is the export file.  If you knew that the program wouldn't crash, you could just
-            # do this once, at the end.   Until then, it "backs up" the sample dictionary on
+            # do this once, at the end.   Until then, it "backs up" the batch dictionary on
             # the WRITE_FREQ interval if we reached the due date for the next event.
             if elapsed >= write_next:
 
                 # this really should use the WITH statement
                 # from: https://stackoverflow.com/questions/11026959/python-writing-dict-to-txt-file-and-reading-dict-from-txt-file
-                json.dump(sample, open(sample['full_filename'], 'w'))
+                json.dump(batch, open(batch['full_filename'], 'w'))
 
                 # and then schedule the next event
                 write_next += WRITE_FREQ
@@ -654,11 +660,11 @@ if __name__ == "__main__":
 
 
     # add post-roast data, calculations, and comments
-    sample.update(closing_sequence(sample))
+    batch.update(closing_sequence(batch))
 
     # do a final write to the output file so as not to lose the last bit of data that may have
     # accumulated since the last write and post-roast additions as well as the closing_sequence().
-    json.dump(sample, open(sample['full_filename'], 'w'))
+    json.dump(batch, open(batch['full_filename'], 'w'))
     print "\ncomplete.\n"
 
 

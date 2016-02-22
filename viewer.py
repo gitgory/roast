@@ -194,15 +194,15 @@ def main():
 		available_data = ['temp_actual', 'temp_smooth', 'upper_bound','lower_bound', 'target_temp']			# more could go here but i need error handling for the files that don't have keys with these legend_names
 
 
-		# variable_locker = []				
-		# desired_data = get_desired_data(available_data)
+		variable_locker = []				
+		desired_data = get_desired_data(available_data)
 		# currently not working, bypassed below
 		# When it works it should allow creation of the desired_data list via checkboxes in Tkinter		
 		# for i in range(len(variable_locker)):
 		# 	print variable_locker[i], " = ", variable_locker[i].get()
 
 		# this is the temporary solution to getting the data series the user wants... use until get_desired_data() above is fixed
-		desired_data = get_desired_data_TEMP(available_data)
+		# desired_data = get_desired_data_TEMP(available_data)
 
 
 		if raw_input('Export to CSV?  [y/N]  ') in ['Y','y']:

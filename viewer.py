@@ -59,8 +59,9 @@ def get_desired_data(all_possible_data):
         global variable_locker
         global available_data
 
-        for i in range(len(available_data)):
-            print available_data[i], variable_locker[i].get()
+        # show all variables and the selection (True) or not selected (False)
+        #for i in range(len(available_data)):
+        #    print available_data[i], variable_locker[i].get()
         # exit the Tk window
         master.destroy()
 
@@ -97,7 +98,7 @@ def get_desired_data(all_possible_data):
 
     temp_data =[]
     for i in range(len(variable_locker)):
-        print variable_locker[i], " = ", variable_locker[i].get()
+        #print variable_locker[i], " = ", variable_locker[i].get()
         if variable_locker[i].get():
             temp_data.append(all_possible_data[i])
     return temp_data
@@ -171,11 +172,21 @@ def generate_title(d):
     title = "%s\nRun #%02.i,T_ambient = %.f\n\n"%(d['beanName'], d['run'], d['t_ambient'])
     return title
 
+def welcome_message():
+	print "\n"*20
+	print "\t\t\t************************************"
+	print "\t\t\t*        Roast viewer              *"
+	print "\t\t\t************************************"
+	print "\n"*10
+	return
+
 
 
 def main():
-    global variable_locker
+    #global variable_locker
     global available_data
+
+    welcome_message()
 
     while True:
         try:
@@ -210,7 +221,7 @@ def main():
                 except IOError:
                     # likely the user canceled the save location window
                     print "Invalid location. Canceling"
-                    
+
 
 
         if raw_input('Show graph?  [Y/n]  ') in ['Y','y','']:

@@ -627,7 +627,7 @@ if __name__ == "__main__":
                 target = get_profile_data_point(elapsed)
                 
                 # write it to the batch dictionary
-                batch['target'].append([elapsed_trunc, target])
+                batch['target_temp'].append([elapsed_trunc, target])
 
                 target_next += TARGET_FREQ
 
@@ -651,7 +651,7 @@ if __name__ == "__main__":
             if elapsed >= print_next:
 
                 # prints the desired info from the batch dictionary to the screen, with formatting
-                print 'Time: %s\tBean: %.1f\tAverage: %.1f\tTarget: %.1f\t%s' % (convert_time(elapsed), batch['temp_actual'][-1][1], batch['temp_smooth'][-1][1], batch['temp_target'][-1][-1], FAKE_MESSAGE)
+                print 'Time: %s\tBean: %.1f\tAverage: %.1f\tTarget: %.1f\t%s' % (convert_time(elapsed), batch['temp_actual'][-1][1], batch['temp_smooth'][-1][1], batch['target_temp'][-1][-1], FAKE_MESSAGE)
 
                 print_next += PRINT_FREQ
 

@@ -157,25 +157,27 @@ def load_roast_profile():
     Allows user to select a pre-existing roast profile to guide the roast.
 
     Parameters:
+    	None.
 
     Returns:
+    	use_this_data: (2D list) containing temp, time pairs in the format [[0.0, 68.1],...]
 
     Raises:
     """
 
     # profile data is stored in the same file format as regular roasts - it may even be a regular roast
     print "Select desired roast profile."
-    profile_file_path = user_select_files("Select desired roast profile.")
-    prof = json.load(open(profile_file_path))
+    # limit it to a single file
+    profile_file_path = user_select_files("Select desired roast profile.", limit=1)
+    # it returns a tuple so we have to select just the inside cell
+    prof = json.load(open(profile_file_path[0]))
 
-    # data is stored as unicode strings
-    use_this_data = []
-    for k in prof.keys():
-        use_this_data += [[float(x),float(y)] for [x,y] in prof[k]]
-    print use_this_data
+    # WARNING: Assumes that the profile stores temps just as the regular batch roasts with the key of 'temp_actual'
+    # this makes sense because we may want to use an actual batch as a profile.
+    # however it is vulnerable if we decide to change key names elsewhere.
+    use_this_data = [[float(x),float(y)] for [x,y] in prof['temp_actual']]
+    
     return use_this_data
-
-
 
 def get_bean_info():
     """

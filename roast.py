@@ -152,6 +152,30 @@ def generate_batch_dict():
 
     return temp_dict
 
+def load_roast_profile():
+    """
+    Allows user to select a pre-existing roast profile to guide the roast.
+
+    Parameters:
+
+    Returns:
+
+    Raises:
+    """
+    
+    # profile data is stored in the same file format as regular roasts - it may even be a regular roast
+    profile_file_path = tk_ui_for_path("Select desired roast profile.")
+    prof = json.load(open(profile_file_path))
+
+    # data is stored as unicode strings
+    use_this_data = []
+    for k in prof.keys():
+        use_this_data += [[float(x),float(y)] for [x,y] in prof[k]]
+    print use_this_data
+    return use_this_data
+
+
+
 def get_bean_info():
     """
     Grabs information about the bean, including name, but potentially order date, region, etc.
@@ -502,6 +526,7 @@ if __name__ == "__main__":
 
     welcome_message()
     batch = generate_batch_dict()
+    profile = load_roast_profile()
     display_preliminary_temps()
     wait_for_user()
 

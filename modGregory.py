@@ -36,6 +36,18 @@ def tk_ui_for_path(t = "Select the save location"):
         pth = "./"
     return pth
 
+def user_select_files(message):
+    # grab the path for each file. This dialog should open in the "root" window of Tk
+    # returns a list of file path and name strings
+    # information on grabbing multiple files from the UI from: 
+    #     https://stackoverflow.com/questions/16790328/open-multiple-filenames-in-tkinter-and-add-the-filesnames-to-a-list
+    #     http://www.pythonbackend.com/topic/1354022597
+    # define the top-level window for this Tkinter app
+    root = Tk()        
+    get_filenames = tkFileDialog.askopenfilenames(parent=root,title=message)        # I think this is why I currently get the lone window left open...
+    root.destroy()
+    return get_filenames
+
 def get_str_from_user(message="Enter the filename with suffix:  ", valid_suffix=['csv','txt']):
     # Asks the user for a filename, including suffix
     # Retuns the string of the filename and suffix (no path)

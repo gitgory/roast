@@ -12,6 +12,8 @@ FAKE_DATA_FILENAME = './fake_data.txt'
 FAKE_MESSAGE = "* FAKE *"    # Display this message when using fake data.
 fake_data = []               # Not a constant but must be initiated early because it is actually
                              # assigned a meaningful value inside of a function and a global var
+profile_data = []            # Not a constant but must be initiated early because it is actually
+                             # assigned a meaningful value inside of a function and a global var
 
 if not USING_FAKE_DATA:
 
@@ -40,12 +42,14 @@ SMOOTH_OVER = 15  # The number of readings to average over. Changing this DOES c
 
 # events occur every n seconds
 READ_FREQ  = 0.2
+TARGET_FREQ = READ_FREQ
 SMOOTH_FREQ= 0.2
 PRINT_FREQ = 1
 WRITE_FREQ = 30   # write is functionally a back up frequency
 
 # offset them to ensure they happen in the correct order and to avoid any potential conflicts
 READ_OFFSET  = 0
+TARGET_OFFSET = READ_OFFSET
 SMOOTH_OFFSET= 0
 PRINT_OFFSET = 0
 WRITE_OFFSET = 4    # while testing, you'll want to see the data before the first WRITE_FREQ trigger
@@ -156,14 +160,18 @@ def load_roast_profile():
     """
     Allows user to select a pre-existing roast profile to guide the roast.
 
+    Based on laod_fake_data()
+
     Parameters:
     	None.
 
     Returns:
-    	use_this_data: (2D list) containing temp, time pairs in the format [[0.0, 68.1],...]
+    	saves to profile_data (global 2D list) containing temp, time pairs in the format [[0.0, 68.1],...]
 
     Raises:
     """
+
+    global profile_data
 
     # profile data is stored in the same file format as regular roasts - it may even be a regular roast
     print "Select desired roast profile."
@@ -175,9 +183,9 @@ def load_roast_profile():
     # WARNING: Assumes that the profile stores temps just as the regular batch roasts with the key of 'temp_actual'
     # this makes sense because we may want to use an actual batch as a profile.
     # however it is vulnerable if we decide to change key names elsewhere.
-    use_this_data = [[float(x),float(y)] for [x,y] in prof['temp_actual']]
+    profile_data = [[float(x),float(y)] for [x,y] in prof['temp_actual']]
     
-    return use_this_data
+    return
 
 def get_bean_info():
     """
@@ -229,7 +237,8 @@ def get_batch_info():
     # Generating the batch dicionary keys HERE isn't ideal...
     # they should be identified elsewhere, perferably with the other VARIABLE definitions at the beginning
     temp_dict = {}
-    temp_dict['t_ambient'] = get_ambient_f()
+    temp_dict['t_ambient'] = get_ambient_f()		### THIS SHOULD PROBABLY BE 'temp_ambient'
+    temp_dict['target_temp'] = []
 
     temp_dict['starting_wt'] = raw_input("Enter the starting weight in grams (example: 80)... ")
     temp_dict['run'] = raw_input("Enter the Run # (example: 5)... ")
@@ -399,7 +408,7 @@ def get_fake_data_point(elapsed):
 
     Parameters:
         elapsed: (float) time in seconds since start        
-        FAKE_DATA
+        fake_data (global 2D list)
 
     Returns: 
         (float) representing a temperature in Fahrenheit
@@ -423,6 +432,40 @@ def get_fake_data_point(elapsed):
     # this won't fly anymore if you remove the global functionality.
     fake_data = fake_data[i:]
     return fake_data[0][1]
+
+def get_profile_data_point(elapsed):
+    """
+    Grabs a data point from a time-temp pair list, based on elapsed time.
+
+    Very similar to get_fake_data_point() but I've added this as a standalone function
+    since it is hard to deal with the way I did the files (using the global variables).
+
+    Parameters:
+        elapsed: (float) time in seconds since start        
+        profile_data (global 2D list)
+
+    Returns: 
+        (float) representing a temperature in Fahrenheit
+
+    Raises:
+        IndexError: after running out of fake data
+    """
+
+    global profile_data
+
+    i=0
+    # we know the profile data comes sorted chronologically so we'll just step through it, 
+    # ignoring all the time-temp pair that have already passed 
+    try:
+        while profile_data[i][0] < elapsed:
+            i += 1
+    except IndexError:
+        print "Came to the end of the profile data."
+
+    # cut the profile list short so we don't have to search it all again.
+    # this won't fly anymore if you remove the global functionality.
+    profile_data = profile_data[i:]
+    return profile_data[0][1]
 
 def smooth_data(sampled_pairs):
     """
@@ -519,6 +562,7 @@ if __name__ == "__main__":
     # to get UnboundLocalError due to the += assignment that thappens for each event.
     # alternatively, they could all be marked global but that seems sketchy too.
     read_next  = READ_OFFSET
+    target_next= TARGET_OFFSET
     smooth_next= SMOOTH_OFFSET
     print_next = PRINT_OFFSET
     write_next = WRITE_OFFSET
@@ -550,7 +594,7 @@ if __name__ == "__main__":
             elapsed_trunc = truncate(elapsed,3)
 
 
-            # four events happen in this loop: READ, SMOOTH, PRINT, and WRITE
+            # five events happen in this loop: READ, determine the TARGET TEMP, SMOOTH, PRINT, and WRITE
             # the basic flow goes like this:
             # if we reached or passed the due date (total elapsed time in seconds) for the event:
                 # do it
@@ -575,6 +619,20 @@ if __name__ == "__main__":
                 read_next += READ_FREQ
 
 
+
+            # GET TARGET TEMP
+            if elapsed >= target_next:
+
+                # grab the temperature from the sensor
+                target = get_profile_data_point(elapsed)
+                
+                # write it to the batch dictionary
+                batch['target'].append([elapsed_trunc, target])
+
+                target_next += TARGET_FREQ
+
+
+
             # SMOOTHING DATA
             # the sensor reading is really noisy and jumps around a lot.
             # It's not reliable to use for controlling yet.  It must be smoothed my some means.
@@ -593,7 +651,7 @@ if __name__ == "__main__":
             if elapsed >= print_next:
 
                 # prints the desired info from the batch dictionary to the screen, with formatting
-                print 'Time: %s\tBean: %.1f\tAverage: %.1f\t%s' % (convert_time(elapsed), batch['temp_actual'][-1][1], batch['temp_smooth'][-1][1], FAKE_MESSAGE)
+                print 'Time: %s\tBean: %.1f\tAverage: %.1f\tTarget: %.1f\t%s' % (convert_time(elapsed), batch['temp_actual'][-1][1], batch['temp_smooth'][-1][1], batch['temp_target'][-1][-1], FAKE_MESSAGE)
 
                 print_next += PRINT_FREQ
 

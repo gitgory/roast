@@ -162,9 +162,10 @@ def load_roast_profile():
 
     Raises:
     """
-    
+
     # profile data is stored in the same file format as regular roasts - it may even be a regular roast
-    profile_file_path = tk_ui_for_path("Select desired roast profile.")
+    print "Select desired roast profile."
+    profile_file_path = user_select_files("Select desired roast profile.")
     prof = json.load(open(profile_file_path))
 
     # data is stored as unicode strings

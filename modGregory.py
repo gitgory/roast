@@ -3,6 +3,7 @@
 
 from random import randint
 from Tkinter import *
+import tkFileDialog
 from tkFileDialog import askdirectory
 
 

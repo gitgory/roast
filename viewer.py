@@ -10,24 +10,13 @@ import json
 
 import matplotlib.pyplot as plt
 from Tkinter import *
-import tkFileDialog
 from modGregory import *
 
 #VERSION = "16.02.06"        # just yy.mm.dd format of last update
 variable_locker = []
 available_data = []
 
-def user_select_files(message):
-    # grab the path for each file. This dialog should open in the "root" window of Tk
-    # returns a list of file path and name strings
-    # information on grabbing multiple files from the UI from: 
-    #     https://stackoverflow.com/questions/16790328/open-multiple-filenames-in-tkinter-and-add-the-filesnames-to-a-list
-    #     http://www.pythonbackend.com/topic/1354022597
-    # define the top-level window for this Tkinter app
-    root = Tk()        
-    get_filenames = tkFileDialog.askopenfilenames(parent=root,title=message)        # I think this is why I currently get the lone window left open...
-    root.destroy()
-    return get_filenames
+
 
 def read_in_data(filenames):
     # given a list of filenames, this returns a list. Each entry is a dictionary representing the data from the files
@@ -192,7 +181,7 @@ def main():
         try:
             # get a list of all the files we're reading from (full path)
             print "Choose file(s) to view."
-            filez = user_select_files("Choose a file")
+            filez = user_select_files("Choose file(s) to view.")
 
             # read in all the data from those files
             all_roasts = read_in_data(filez)

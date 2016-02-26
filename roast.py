@@ -7,8 +7,8 @@ import json
 from modGregory import *
 
 # Use fake data for testing the script when you don't have the beaglebone.
-USING_FAKE_DATA = False
-FAKE_DATA_FILENAME = './fake_data.txt'
+USING_FAKE_DATA = True
+FAKE_DATA_FILENAME = './fake_data.json'
 FAKE_MESSAGE = "* FAKE *"    # Display this message when using fake data.
 fake_data = []               # Not a constant but must be initiated early because it is actually
                              # assigned a meaningful value inside of a function and a global var
@@ -33,7 +33,7 @@ if not USING_FAKE_DATA:
     # actual sampled data. Avoids conoditional statement in loop later.
     FAKE_MESSAGE = ""
 
-FILE_EXT = ".txt" # Extension (string) of the save file. Soon to be ".json"
+FILE_EXT = ".json" # Extension (string) of the save file. Soon to be ".json"
 MAX_ATTEMPTS = 3  # Number of tries to get a non-NaN temperature reading
 VERBOSE = True    # Allow additional comments such as the NaN commentary?
 BEAN_TEMP = 68    # Initial bean temperature (*F). Only used to initialize a running average.

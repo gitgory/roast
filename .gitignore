@@ -1,3 +1,3 @@
 *.pyc
-incoming_roasts/Batch_99_TEST_FAKE_DATA.txt
+incoming_roasts/*FAKE_DATA*
 

@@ -60,12 +60,13 @@ def user_select_files(message, limit=99):
     # does not address no selection/canceled window
     return get_filenames
 
-def get_str_from_user(message="Enter the filename with suffix:  ", valid_suffix=['csv','txt']):
+def get_str_from_user(message="Enter the filename with suffix:  ", valid_suffix=['csv','txt','json']):
+    # Currently not in use.
     # Asks the user for a filename, including suffix
-    # Retuns the string of the filename and suffix (no path)
+    # Returns the string of the filename and suffix (no path)
     while True:
         f = raw_input(message)
-        if isinstance(f, str) and f[-4] == "." and f[-3:] in valid_suffix:
+        if isinstance(f, str) and f[f.index(".")+1:] in valid_suffix:
             return f
         else:
             print("Try again. Remember to include the suffix.")

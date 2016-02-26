@@ -44,15 +44,19 @@ def user_select_files(message, limit=99):
     #     https://stackoverflow.com/questions/16790328/open-multiple-filenames-in-tkinter-and-add-the-filesnames-to-a-list
     #     http://www.pythonbackend.com/topic/1354022597
     # define the top-level window for this Tkinter app
-    root = Tk()        
-    while True:
-        get_filenames = tkFileDialog.askopenfilenames(parent=root,title=message)        # I think this is why I currently get the lone window left open...
-        # allows this function to be used for multiple or single file selection.
-        if len(get_filenames)<=limit:
-            break
-        else:
-            print "file selection is limited to %i files" % limit
-    root.destroy()
+    try:
+        # this fails when you don't have a $DISPLAY determined, presumably when you are working on the beaglebone headless?
+        root = Tk()        
+        while True:
+            get_filenames = tkFileDialog.askopenfilenames(parent=root,title=message)        # I think this is why I currently get the lone window left open...
+            # allows this function to be used for multiple or single file selection.
+            if len(get_filenames)<=limit:
+                break
+            else:
+                print "file selection is limited to %i files" % limit
+        root.destroy()
+    except: 
+        get_filenames = ()
     # does not address no selection/canceled window
     return get_filenames
 

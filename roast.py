@@ -7,7 +7,7 @@ import json
 from modGregory import *
 
 # Use fake data for testing the script when you don't have the beaglebone.
-USING_FAKE_DATA = True
+USING_FAKE_DATA = False
 FAKE_DATA_FILENAME = './fake_data.txt'
 FAKE_MESSAGE = "* FAKE *"    # Display this message when using fake data.
 fake_data = []               # Not a constant but must be initiated early because it is actually
@@ -160,7 +160,7 @@ def load_roast_profile():
     """
     Allows user to select a pre-existing roast profile to guide the roast.
 
-    Based on laod_fake_data()
+    Based on load_fake_data()
 
     Parameters:
     	None.
@@ -178,13 +178,18 @@ def load_roast_profile():
     # limit it to a single file
     profile_file_path = user_select_files("Select desired roast profile.", limit=1)
     # it returns a tuple so we have to select just the inside cell
-    prof = json.load(open(profile_file_path[0]))
+    if profile_file_path == ():
+        # this occurs when you are running headless on BBB and can't select a file
+        # or presumably when you cancel or don't want to use a profile.
+        profile_data = None
+    else:
+        prof = json.load(open(profile_file_path[0]))
 
-    # WARNING: Assumes that the profile stores temps just as the regular batch roasts with the key of 'temp_actual'
-    # this makes sense because we may want to use an actual batch as a profile.
-    # however it is vulnerable if we decide to change key names elsewhere.
-    profile_data = [[float(x),float(y)] for [x,y] in prof['temp_actual']]
-    
+        # WARNING: Assumes that the profile stores temps just as the regular batch roasts with the key of 'temp_actual'
+        # this makes sense because we may want to use an actual batch as a profile.
+        # however it is vulnerable if we decide to change key names elsewhere.
+        profile_data = [[float(x),float(y)] for [x,y] in prof['temp_actual']]
+        
     return
 
 def get_bean_info():
@@ -621,7 +626,7 @@ if __name__ == "__main__":
 
 
             # GET TARGET TEMP
-            if elapsed >= target_next:
+            if elapsed >= target_next and profile_data:
 
                 # grab the temperature from the sensor
                 target = get_profile_data_point(elapsed)
@@ -651,7 +656,9 @@ if __name__ == "__main__":
             if elapsed >= print_next:
 
                 # prints the desired info from the batch dictionary to the screen, with formatting
-                print 'Time: %s\tBean: %.1f\tAverage: %.1f\tTarget: %.1f\t%s' % (convert_time(elapsed), batch['temp_actual'][-1][1], batch['temp_smooth'][-1][1], batch['target_temp'][-1][-1], FAKE_MESSAGE)
+                if profile_data: 
+                    print 'Time: %s\tBean: %.1f\tAverage: %.1f\tTarget: %.1f\t%s' % (convert_time(elapsed), batch['temp_actual'][-1][1], batch['temp_smooth'][-1][1], batch['target_temp'][-1][-1], FAKE_MESSAGE)
+                else: print 'Time: %s\tBean: %.1f\tAverage: %.1f\t%s' % (convert_time(elapsed), batch['temp_actual'][-1][1], batch['temp_smooth'][-1][1], FAKE_MESSAGE)
 
                 print_next += PRINT_FREQ
 

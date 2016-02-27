@@ -55,19 +55,20 @@ def read_in_data(filenames):
     return all_together
 
 def get_desired_data(all_possible_data):
-    # this function does not work right now. it does not return 1 (True) values for checked boxes
-    # i really don't understand what's the issue.
+    """
+    Opens a Tk window to allow the user to select the data they are interested in.
+
+    Parameters:
+        all_possible_data:
+
+    Returns: 
+        a list of the keywords for the desired data.
+
+    Raises:
+        None.
+    """    
+
     # IDEALLY, it takes a list of strings which are the names of available series in the roast files that can be graphed
-
-    def var_states():
-        global variable_locker
-        global available_data
-
-        # show all variables and the selection (True) or not selected (False)
-        #for i in range(len(available_data)):
-        #    print available_data[i], variable_locker[i].get()
-        # exit the Tk window
-        master.destroy()
 
     master = Tk()
     global variable_locker
@@ -75,9 +76,7 @@ def get_desired_data(all_possible_data):
     # Display some instructions in the UI window
     Label(master, text="Select the data series to display").grid(row=0, sticky=W)
 
-
-    # count rows for placing items in the Tk window
-    r = 0
+    r = 0			# row counter
 
     # we will create a checkbox to allow the user to select each piece of data they are interested in
     for option in all_possible_data:
@@ -89,15 +88,9 @@ def get_desired_data(all_possible_data):
         Checkbutton(master, text=option, variable=variable_locker[-1]).grid(row=r, sticky=W)
 
     
-    # add some Buttons
-    # This one just exits the window
-    Button(master, text='Cancel', command=master.destroy).grid(row=r+1, sticky=E, pady=4)
-    # this one passes data via the var_states()
-    Button(master, text='Show Graphs', command=var_states).grid(row=r+1, sticky=W, pady=4)
-    #Button(master, text='Show Graphs', command=master.quit).grid(row=r+1, sticky=W, pady=4)
-    # initialize the Tk window?
-    
-    
+    # add some control Buttons
+    Button(master, text='Show Graphs', command=master.destroy).grid(row=r+1, sticky=E, pady=4)
+        
     mainloop()
 
     temp_data =[]
@@ -107,7 +100,6 @@ def get_desired_data(all_possible_data):
             temp_data.append(all_possible_data[i])
     return temp_data
 
-    # and we're out of the Tk window now
 
 def graph_roasts(all_roasts, desired_data):
         

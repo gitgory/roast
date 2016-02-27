@@ -3,6 +3,7 @@
 
 from random import randint
 from Tkinter import *
+import tkFileDialog
 from tkFileDialog import askdirectory
 
 
@@ -36,12 +37,36 @@ def tk_ui_for_path(t = "Select the save location"):
         pth = "./"
     return pth
 
-def get_str_from_user(message="Enter the filename with suffix:  ", valid_suffix=['csv','txt']):
+def user_select_files(message, limit=99):
+    # grab the path for each file. This dialog should open in the "root" window of Tk
+    # returns a list of file path and name strings
+    # information on grabbing multiple files from the UI from: 
+    #     https://stackoverflow.com/questions/16790328/open-multiple-filenames-in-tkinter-and-add-the-filesnames-to-a-list
+    #     http://www.pythonbackend.com/topic/1354022597
+    # define the top-level window for this Tkinter app
+    try:
+        # this fails when you don't have a $DISPLAY determined, presumably when you are working on the beaglebone headless?
+        root = Tk()        
+        while True:
+            get_filenames = tkFileDialog.askopenfilenames(parent=root,title=message)        # I think this is why I currently get the lone window left open...
+            # allows this function to be used for multiple or single file selection.
+            if len(get_filenames)<=limit:
+                break
+            else:
+                print "file selection is limited to %i files" % limit
+        root.destroy()
+    except: 
+        get_filenames = ()
+    # does not address no selection/canceled window
+    return get_filenames
+
+def get_str_from_user(message="Enter the filename with suffix:  ", valid_suffix=['csv','txt','json']):
+    # Currently not in use.
     # Asks the user for a filename, including suffix
-    # Retuns the string of the filename and suffix (no path)
+    # Returns the string of the filename and suffix (no path)
     while True:
         f = raw_input(message)
-        if isinstance(f, str) and f[-4] == "." and f[-3:] in valid_suffix:
+        if isinstance(f, str) and f[f.index(".")+1:] in valid_suffix:
             return f
         else:
             print("Try again. Remember to include the suffix.")

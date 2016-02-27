@@ -19,6 +19,21 @@ available_data = []
 
 
 def read_in_data(filenames):
+    """
+    Loads json data structures for a list of files into a list.
+
+    It also adds the path and a nickname to to each json structure loaded in, based on filenames.
+
+    Parameters:
+        filenames: (tuple) of file names, including file path
+
+    Returns: 
+        a list of the the imports from the files in the form: [{'key':value,...},...]
+
+    Raises:
+        None.
+    """
+
     # given a list of filenames, this returns a list. Each entry is a dictionary representing the data from the files
     all_together =[]
     for f in filenames:
@@ -94,40 +109,6 @@ def get_desired_data(all_possible_data):
 
     # and we're out of the Tk window now
 
-def get_desired_data_TEMP(all_possible_data): 
-    # it takes a list of strings which are the names of available series in the roast files that can be graphed
-    # user selects which series they desire and it returns a list of those series names (strings)
-    # this is an intermediate step to determine the data series's the user wants to plot.  It is text-entry based until we can get the UI checkboxes working.
-
-    for i in range(len(all_possible_data)):
-        print "%i)   %s" % (i, all_possible_data[i])
-
-
-    desired_series = []
-
-
-    while True:
-        # get the user's preferences
-        
-        user_selection = raw_input("Select desired data series (leave blank to continue):  ")
-        if user_selection == "": break
-        try:
-            user_selection = int(user_selection)
-            desired_series.append(all_possible_data[user_selection])
-        except (SyntaxError, ValueError):
-            # didn't enter an integer
-            print "Invalid entry -- <leave blank to continue> "
-            continue
-        except IndexError:
-            # its outside of the bounds of the options
-            print "Value out of range"
-            continue
-
-    # strip out any duplicates
-    desired_series = list(set(desired_series))
-
-    return desired_series
-
 def graph_roasts(all_roasts, desired_data):
         
     all_plots = []                # this supposed to be the equivalent of a handle for a plot, but for each plot
@@ -162,12 +143,12 @@ def generate_title(d):
     return title
 
 def welcome_message():
-	print "\n"*20
-	print "\t\t\t************************************"
-	print "\t\t\t*        Roast viewer              *"
-	print "\t\t\t************************************"
-	print "\n"*10
-	return
+    print "\n"*20
+    print "\t\t\t************************************"
+    print "\t\t\t*        Roast viewer              *"
+    print "\t\t\t************************************"
+    print "\n"*10
+    return
 
 
 
@@ -196,8 +177,6 @@ def main():
         available_data = ['temp_actual', 'temp_smooth', 'upper_bound','lower_bound', 'target_temp']            # more could go here but i need error handling for the files that don't have keys with these legend_names
 
         desired_data = get_desired_data(available_data)
-        # this was the temporary solution to getting the data series the user wants
-        # desired_data = get_desired_data_TEMP(available_data)
 
 
         if raw_input('Export to CSV?  [y/N]  ') in ['Y','y']:

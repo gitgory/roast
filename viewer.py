@@ -59,7 +59,8 @@ def get_desired_data(all_possible_data):
     Opens a Tk window to allow the user to select the data they are interested in.
 
     Parameters:
-        all_possible_data:
+        all_possible_data: (list) of keywords.  Ideally, this could be polled programatically, here,
+            and proposed to the user based on whether the items were graphable and in common with all selected files.
 
     Returns: 
         a list of the keywords for the desired data.
@@ -67,8 +68,6 @@ def get_desired_data(all_possible_data):
     Raises:
         None.
     """    
-
-    # IDEALLY, it takes a list of strings which are the names of available series in the roast files that can be graphed
 
     master = Tk()
     global variable_locker
@@ -78,10 +77,9 @@ def get_desired_data(all_possible_data):
 
     r = 0			# row counter
 
-    # we will create a checkbox to allow the user to select each piece of data they are interested in
+    # we will create a checkbox for each of the available data sets
     for option in all_possible_data:
-        # jump down to the next row
-        r += 1
+        r += 1        # jump down to the next row
         # add a new IntVar to the locker
         variable_locker.append(IntVar())
         # display a checkbox for the option
@@ -100,13 +98,25 @@ def get_desired_data(all_possible_data):
             temp_data.append(all_possible_data[i])
     return temp_data
 
-
 def graph_roasts(all_roasts, desired_data):
-        
-    all_plots = []                # this supposed to be the equivalent of a handle for a plot, but for each plot
-    legend_names = []            # collects all the nicknames for display to the legend
-    # import that data
+    """
+    Creates a matplotlib graph of the desired_data from a list of roasts (json)
 
+    Parameters:
+        all_roasts: (list of json objects)
+        desired_data: (list) of keywords in the json objects
+
+    Returns: 
+        None. Outputs a graph to the screen.
+
+    Raises:
+        None.
+    """
+        
+    all_plots = []               # this supposed to be the equivalent of a handle for a plot, but for each plot
+    legend_names = []            # collects all the nicknames for display to the legend
+    
+    # import that data
     for roast in all_roasts:
         for series in desired_data:
             x = []
@@ -116,25 +126,25 @@ def graph_roasts(all_roasts, desired_data):
                 y.append(i[1])
             all_plots.append(plt.plot(x, y))
             legend_names.append(roast['nickname']+" "+series)
-
+    
+    # plot formatting
     plt.ylabel("Temp ('F)")
     plt.xlabel("Time (sec)")
     plt.legend(tuple(legend_names), prop={'size':11}, loc='lower right')
-
-    # I'd like to be able to manually change the colors... but this isn't the way
-    #all_plots[1].set_color('red')
-
-
 
     # output them to a screen
     plt.show()
 
 def generate_title(d):
+    """ Creates a header string from important dictionary keys to display on the top of a human-readable *.csv file
+    """
     # takes the bean dictionary and creates a title/header for the csv file (returns a string)
     title = "%s\nRun #%02.i,T_ambient = %.f\n\n"%(d['beanName'], d['run'], d['t_ambient'])
     return title
 
 def welcome_message():
+	""" Prints an ASCII welcome message.
+	"""
     print "\n"*20
     print "\t\t\t************************************"
     print "\t\t\t*        Roast viewer              *"
